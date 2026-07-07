@@ -1,8 +1,23 @@
 # Magnify.Snap ⚡🔍
 
-Fast screen magnifier for **Windows** and **Linux**. Lives in the system
-tray, toggles with a single middle-mouse click, and the screen stays
-**fully interactive** — click, type and work as usual while zoomed in.
+**Click — zoom. Click — back. One mouse button is the whole interface.**
+
+Press the middle mouse button: the screen instantly zooms to 200%.
+Press it again: you're back to 100%. That's it. No keyboard chords to
+remember, no toolbars, no floating widgets, no mode you have to exit.
+And while zoomed, the screen stays **fully interactive** — click, type
+and work as usual.
+
+Compare that to the standard way: the built-in magnifiers want a key
+combo to start, another to zoom, a third to quit, and park a toolbar on
+your screen the whole time. Magnify.Snap is one flick of a finger you
+already have on the mouse.
+
+> **Why this exists.** The author needed a quick screen zoom for
+> everyday work — just "look closer, then keep working". After trying
+> the built-in magnifiers and a pile of third-party tools, nothing
+> turned out to be truly fast and frictionless. So this app was built:
+> a magnifier that gets out of your way.
 
 <p align="center">
   <a href="https://github.com/violet2code/magnify-snap/releases/download/v1.1.0/MagnifySnap-1.1.0-windows-x64.exe"><img src="https://img.shields.io/badge/⬇%20Download%20for%20Windows-x64%20.exe-4f8dfd?style=for-the-badge" alt="Download for Windows"></a>
@@ -16,6 +31,17 @@ tray, toggles with a single middle-mouse click, and the screen stays
 </p>
 
 ![logo](assets/logo.png)
+
+## How it feels
+
+![Middle click — 200%, click again — 100%](assets/demo-zoom.png)
+
+## Settings
+
+Everything is optional — the app works out of the box. But if you want
+to tune it, the settings are one tray-click away:
+
+<p align="center"><img src="assets/screenshot-settings.png" width="420" alt="Magnify.Snap settings window"></p>
 
 ## Features
 

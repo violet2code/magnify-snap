@@ -116,6 +116,24 @@
   .step p { color: var(--dim); font-size: 14.5px; }
   .step b { color: var(--text); }
 
+  .shot { max-width: 100%; border-radius: 16px; border: 1px solid var(--card-border); }
+  .shot.wide { margin-top: 40px; }
+  section.why { padding: 40px 0 0; }
+  .why blockquote {
+    max-width: 760px; margin: 0 auto; padding: 28px 34px;
+    background: var(--card); border: 1px solid var(--card-border);
+    border-left: 4px solid var(--green); border-radius: 14px;
+  }
+  .why blockquote p { color: var(--text); font-size: 17px; }
+  .why blockquote em { color: var(--green); font-style: normal; }
+  .why blockquote footer { padding: 10px 0 0; text-align: left; font-size: 14px; color: var(--dim); }
+  section.shots { padding: 56px 0 8px; }
+  .shots-row { display: flex; gap: 30px; align-items: center; flex-wrap: wrap; }
+  .shots-row .shot { flex: 1 1 300px; max-width: 380px; margin: 0 auto; }
+  .shots-text { flex: 1 1 320px; color: var(--dim); font-size: 16px; }
+  .shots-text p { margin-bottom: 14px; }
+  .shots-text p:first-child { color: var(--text); font-size: 17px; }
+
   footer { padding: 48px 0 40px; text-align: center; color: var(--dim); font-size: 14px; }
   footer a { color: var(--blue); text-decoration: none; }
 </style>
@@ -131,10 +149,11 @@
 
 <main>
   <div class="hero wrap">
-    <h1><span class="zoom">Zoom your screen</span><br>in a <span class="snap">snap</span> ⚡</h1>
-    <p class="sub">A free magnifier for Windows and Linux that lives in your system tray.
-    One press of the middle mouse button zooms to 200% — and your screen stays fully
-    interactive: click, type and work as usual.</p>
+    <h1><span class="zoom">Click — zoom.</span><br><span class="snap">Click — back.</span> ⚡</h1>
+    <p class="sub"><b style="color:var(--text)">One mouse button is the whole interface.</b>
+    Middle click — the screen zooms to 200%. Middle click again — you're back.
+    No key combos, no toolbars, no widgets. And while zoomed, the screen stays fully
+    interactive: click, type and work as usual. Free, for Windows and Linux.</p>
 
     <div class="dl-row">
       <a class="btn win" id="dl-win" href="https://github.com/violet2code/magnify-snap/releases/latest">
@@ -152,7 +171,19 @@
       <span class="keycap">Middle click</span><span class="arrow">→</span><span class="zoomtxt">200%</span><span class="arrow">→</span><span class="keycap">Middle click</span><span class="arrow">→</span><span class="zoomtxt" style="color:var(--green)">100%</span>
       <p style="margin-top:14px;color:var(--dim);font-size:14px">While zoomed, move the cursor to a screen edge — the view glides along.</p>
     </div>
+
+    <img class="shot wide" src="demo-zoom.png" alt="Screen at 100%, middle click, screen at 200%" loading="lazy">
   </div>
+
+  <section class="why wrap">
+    <blockquote>
+      <p>“I just wanted to <em>look closer and keep working</em>. The built-in magnifiers
+      demand key combos to start, more combos to zoom, and park a toolbar on the screen.
+      Third-party tools were heavy, fiddly or both. I searched for something truly fast
+      and convenient — and found nothing. So I built it.”</p>
+      <footer>— the author of Magnify.Snap</footer>
+    </blockquote>
+  </section>
 
   <section class="features wrap">
     <h2>Why Magnify.Snap</h2>
@@ -186,6 +217,21 @@
         <div class="ic"><svg viewBox="0 0 24 24"><path d="M12 2 4 6v6c0 5 3.4 8.4 8 10 4.6-1.6 8-5 8-10V6l-8-4Z"/><path d="m9 12 2 2 4-4"/></svg></div>
         <h3>Tiny and honest</h3>
         <p>A single portable file. No installer, no ads, no telemetry. Open source — inspect every line on GitHub.</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="shots wrap">
+    <h2>Simple on the surface, tunable underneath</h2>
+    <div class="shots-row">
+      <img class="shot" src="screenshot-settings.png" alt="Magnify.Snap settings window" loading="lazy">
+      <div class="shots-text">
+        <p>Magnify.Snap works out of the box — install nothing, configure nothing,
+        middle click and go.</p>
+        <p>When you want more, the settings are one tray-click away: zoom level
+        from 125% to 800%, any mouse button / key / combination as the trigger,
+        cursor-follow speed, light &amp; dark themes, autostart.</p>
+        <p>No installer. No ads. No telemetry. A single portable file.</p>
       </div>
     </div>
   </section>
