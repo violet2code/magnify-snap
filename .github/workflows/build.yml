@@ -19,10 +19,12 @@ jobs:
           python -m pip install --upgrade -r requirements.txt pyinstaller
           python tools/make_icon.py
           python -m PyInstaller --noconfirm --clean --onefile --windowed --name MagnifySnap --icon assets/icon.ico --collect-all customtkinter main.py
+      - name: Package
+        run: Move-Item dist/MagnifySnap.exe dist/MagnifySnap-windows-x64.exe
       - uses: actions/upload-artifact@v4
         with:
-          name: MagnifySnap-windows
-          path: dist/MagnifySnap.exe
+          name: MagnifySnap-windows-x64
+          path: dist/MagnifySnap-windows-x64.exe
 
   linux:
     # старый Ubuntu = совместимость с большим числом дистрибутивов (glibc)
@@ -39,7 +41,11 @@ jobs:
           python -m pip install --upgrade -r requirements.txt pyinstaller
           python tools/make_icon.py
           python -m PyInstaller --noconfirm --clean --onefile --windowed --name magnifysnap --collect-all customtkinter main.py
+      - name: Package (tar.gz preserves the executable bit)
+        run: |
+          chmod +x dist/magnifysnap
+          tar -czf dist/MagnifySnap-linux-x64.tar.gz -C dist magnifysnap
       - uses: actions/upload-artifact@v4
         with:
-          name: MagnifySnap-linux
-          path: dist/magnifysnap
+          name: MagnifySnap-linux-x64
+          path: dist/MagnifySnap-linux-x64.tar.gz
