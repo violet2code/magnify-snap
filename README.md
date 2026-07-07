@@ -4,6 +4,18 @@ Fast screen magnifier for **Windows** and **Linux**. Lives in the system
 tray, toggles with a single middle-mouse click, and the screen stays
 **fully interactive** — click, type and work as usual while zoomed in.
 
+<p align="center">
+  <a href="https://github.com/violet2code/magnify-snap/releases/download/v1.1.0/MagnifySnap-1.1.0-windows-x64.exe"><img src="https://img.shields.io/badge/⬇%20Download%20for%20Windows-x64%20.exe-4f8dfd?style=for-the-badge" alt="Download for Windows"></a>
+  &nbsp;
+  <a href="https://github.com/violet2code/magnify-snap/releases/download/v1.1.0/MagnifySnap-1.1.0-linux-x64.tar.gz"><img src="https://img.shields.io/badge/⬇%20Download%20for%20Linux-x64%20.tar.gz-3ddc97?style=for-the-badge" alt="Download for Linux"></a>
+</p>
+
+<p align="center">
+  <a href="https://violet2code.github.io/"><img src="https://img.shields.io/badge/🌐%20Website-violet2code.github.io-24292f?style=flat-square" alt="Website"></a>
+  <a href="https://github.com/violet2code/magnify-snap/releases"><img src="https://img.shields.io/github/v/release/violet2code/magnify-snap?style=flat-square&color=4f8dfd" alt="Latest release"></a>
+  <img src="https://img.shields.io/github/downloads/violet2code/magnify-snap/total?style=flat-square&color=3ddc97" alt="Downloads">
+</p>
+
 ![logo](assets/logo.png)
 
 ## Features
