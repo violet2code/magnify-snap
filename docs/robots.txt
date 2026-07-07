@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://violet2code.github.io/sitemap.xml
