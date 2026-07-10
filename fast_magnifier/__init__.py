@@ -1,3 +1,3 @@
 APP_NAME = "Magnify.Snap"
 APP_ID = "MagnifySnap"
-VERSION = "1.1.0"
+VERSION = "1.1.1"

@@ -17,6 +17,7 @@ GREEN = "#2fbe83"
 CARD = ("#eef1f7", "#23262e")
 TEXT_DIM = ("#5c6470", "#9aa3b2")
 WARN_RED = "#e5484d"
+AMBER = "#e8a33d"
 
 FONT = "Segoe UI" if sys.platform == "win32" else "Ubuntu"
 THEME_VALUES = {"System": "system", "Light": "light", "Dark": "dark"}
@@ -283,9 +284,20 @@ class SettingsWindow(ctk.CTkToplevel):
         self.bind_label.configure(
             text="Press a button or combination…", text_color=BLUE
         )
-        self.bind_hint.configure(text="Esc to cancel")
+        self.bind_hint.configure(text="Esc to cancel", text_color=TEXT_DIM)
         self.app.input.start_capture(
-            lambda b, err: self.app.ui_call(lambda: self._end_capture(b, err))
+            lambda b, err: self.app.ui_call(lambda: self._end_capture(b, err)),
+            hint=lambda: self.app.ui_call(self._show_modifier_hint),
+        )
+
+    def _show_modifier_hint(self) -> None:
+        """Пользователь отпустил модификаторы, не нажав основную клавишу."""
+        if not (self.winfo_exists() and self._capturing):
+            return
+        self.bind_hint.configure(
+            text="Modifiers alone can't be a binding — hold them "
+                 "and press a key or mouse button",
+            text_color=AMBER,
         )
 
     def _end_capture(self, binding: Binding | None, error: str | None) -> None:

@@ -31,6 +31,39 @@ for _name, _mod in (
 _WM_DOWN = {0x0201: "left", 0x0204: "right", 0x0207: "middle", 0x020B: "x"}
 _WM_UP = {0x0202: "left", 0x0205: "right", 0x0208: "middle", 0x020C: "x"}
 
+# Windows low-level keyboard hook messages
+_WM_KEYDOWN = (0x0100, 0x0104)  # WM_KEYDOWN, WM_SYSKEYDOWN
+_WM_KEYUP = (0x0101, 0x0105)    # WM_KEYUP, WM_SYSKEYUP
+
+# vk-коды модификаторов — их никогда не подавляем (сломались бы во всей ОС)
+_MOD_VKS = {0x10, 0xA0, 0xA1,   # Shift
+            0x11, 0xA2, 0xA3,   # Ctrl
+            0x12, 0xA4, 0xA5,   # Alt
+            0x5B, 0x5C}         # Win
+
+
+def key_vk(key) -> int | None:
+    """Виртуальный код клавиши pynput (Windows)."""
+    vk = getattr(key, "vk", None)
+    if vk is None:
+        inner = getattr(key, "value", None)
+        vk = getattr(inner, "vk", None)
+    return vk
+
+
+def vk_from_name(name: str) -> int | None:
+    """Восстановление vk по имени — для привязок из старых конфигов без vk."""
+    if len(name) == 1:
+        ch = name.upper()
+        if "0" <= ch <= "9" or "A" <= ch <= "Z":
+            return ord(ch)
+    special = getattr(Key, name, None)
+    if special is not None:
+        return key_vk(special)
+    if name.startswith("vk") and name[2:].isdigit():
+        return int(name[2:])
+    return None
+
 
 def key_name(key) -> str | None:
     """Стабильное имя клавиши, одинаковое при захвате и при проверке."""
@@ -54,19 +87,32 @@ class GlobalInput:
         self._lock = threading.Lock()
         self._mods: set[str] = set()
         self._capture_cb = None
+        self._capture_hint = None
         self._suppress_up: set[str] = set()
+        self._held_vk: int | None = None  # зажатая назначенная клавиша
         self._kb = None
         self._ms = None
+        self._ensure_vk(binding)
+
+    @staticmethod
+    def _ensure_vk(binding: Binding) -> None:
+        if (sys.platform == "win32" and binding.kind == "keyboard"
+                and binding.vk is None):
+            binding.vk = vk_from_name(binding.key)
 
     # -- API ------------------------------------------------------------
 
     def start(self) -> None:
-        self._kb = keyboard.Listener(
-            on_press=self._on_press, on_release=self._on_release
-        )
         if sys.platform == "win32":
+            self._kb = keyboard.Listener(
+                on_press=self._on_press, on_release=self._on_release,
+                win32_event_filter=self._kb_filter,
+            )
             self._ms = mouse.Listener(win32_event_filter=self._win32_filter)
         else:
+            self._kb = keyboard.Listener(
+                on_press=self._on_press, on_release=self._on_release
+            )
             self._ms = mouse.Listener(on_click=self._on_click)
         self._kb.start()
         self._ms.start()
@@ -77,17 +123,24 @@ class GlobalInput:
                 listener.stop()
 
     def set_binding(self, binding: Binding) -> None:
+        self._ensure_vk(binding)
         with self._lock:
             self._binding = binding
 
-    def start_capture(self, callback) -> None:
-        """callback(binding | None, error_msg | None) — из потока слушателя."""
+    def start_capture(self, callback, hint=None) -> None:
+        """callback(binding | None, error_msg | None) — из потока слушателя.
+
+        hint() вызывается, когда пользователь отпустил модификаторы,
+        не нажав основную клавишу (попытка назначить «только модификаторы»).
+        """
         with self._lock:
             self._capture_cb = callback
+            self._capture_hint = hint
 
     def cancel_capture(self) -> None:
         with self._lock:
             self._capture_cb = None
+            self._capture_hint = None
 
     # -- обработка мыши ---------------------------------------------------
 
@@ -138,6 +191,35 @@ class GlobalInput:
 
     # -- обработка клавиатуры ----------------------------------------------
 
+    def _kb_filter(self, msg, data) -> bool:
+        """Низкоуровневый фильтр Windows: подавляет назначенную комбинацию,
+        чтобы она не «просачивалась» в активное приложение (например,
+        Ctrl+Z не делал отмену в текстовом поле)."""
+        vk = data.vkCode
+        if vk in _MOD_VKS:
+            return True  # модификаторы всегда проходят
+        if msg in _WM_KEYDOWN:
+            fire = False
+            consume = False
+            with self._lock:
+                b = self._binding
+                if (self._capture_cb is None
+                        and b.kind == "keyboard" and b.vk is not None
+                        and vk == b.vk and set(self._mods) == set(b.mods)):
+                    consume = True
+                    if self._held_vk is None:  # защита от автоповтора
+                        self._held_vk = vk
+                        fire = True
+            if consume:
+                if fire:
+                    self._on_toggle()
+                self._kb.suppress_event()
+        elif msg in _WM_KEYUP:
+            if self._held_vk == vk:
+                self._held_vk = None
+                self._kb.suppress_event()
+        return True
+
     def _on_press(self, key) -> None:
         mod = _MOD_MAP.get(key)
         if mod is not None:
@@ -148,16 +230,20 @@ class GlobalInput:
             cb = self._capture_cb
             if cb is not None:
                 self._capture_cb = None
+                self._capture_hint = None
                 if key == Key.esc:
                     cb(None, None)  # отмена
                 elif name is None:
                     cb(None, "Could not recognize that key, try another one")
                 else:
-                    cb(Binding("keyboard", name, sorted(self._mods)), None)
+                    cb(Binding("keyboard", name, sorted(self._mods),
+                               key_vk(key)), None)
                 return
             if name is not None and self._binding.matches(
                 "keyboard", name, self._mods
             ):
+                if sys.platform == "win32" and self._binding.vk is not None:
+                    return  # переключение делает низкоуровневый фильтр
                 toggle = self._on_toggle
             else:
                 return
@@ -167,3 +253,9 @@ class GlobalInput:
         mod = _MOD_MAP.get(key)
         if mod is not None:
             self._mods.discard(mod)
+            hint = None
+            with self._lock:
+                if self._capture_cb is not None:
+                    hint = self._capture_hint
+            if hint is not None:
+                hint()

@@ -42,12 +42,17 @@ KEY_NAMES = {
 
 
 class Binding:
-    """kind: 'mouse' | 'keyboard'; key: button/key name; mods: sorted modifiers."""
+    """kind: 'mouse' | 'keyboard'; key: button/key name; mods: sorted modifiers.
 
-    def __init__(self, kind: str, key: str, mods=()):
+    vk — виртуальный код клавиши (Windows), нужен низкоуровневому фильтру,
+    чтобы подавлять назначенную комбинацию до того, как её увидят приложения.
+    """
+
+    def __init__(self, kind: str, key: str, mods=(), vk: int | None = None):
         self.kind = kind
         self.key = key
         self.mods = tuple(sorted(set(mods), key=MOD_ORDER.index))
+        self.vk = vk
 
     def matches(self, kind: str, key: str, mods) -> bool:
         return (
@@ -68,12 +73,15 @@ class Binding:
         return " + ".join(parts)
 
     def to_dict(self) -> dict:
-        return {"kind": self.kind, "key": self.key, "mods": list(self.mods)}
+        return {"kind": self.kind, "key": self.key, "mods": list(self.mods),
+                "vk": self.vk}
 
     @classmethod
     def from_dict(cls, data: dict) -> "Binding":
         try:
             mods = [m for m in data.get("mods", []) if m in MOD_ORDER]
-            return cls(data["kind"], data["key"], mods)
+            vk = data.get("vk")
+            return cls(data["kind"], data["key"], mods,
+                       vk if isinstance(vk, int) else None)
         except (KeyError, TypeError):
             return cls("mouse", "middle")

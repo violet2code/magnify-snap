@@ -20,9 +20,9 @@ already have on the mouse.
 > a magnifier that gets out of your way.
 
 <p align="center">
-  <a href="https://github.com/violet2code/magnify-snap/releases/download/v1.1.0/MagnifySnap-1.1.0-windows-x64.exe"><img src="https://img.shields.io/badge/⬇%20Download%20for%20Windows-x64%20.exe-4f8dfd?style=for-the-badge" alt="Download for Windows"></a>
+  <a href="https://github.com/violet2code/magnify-snap/releases/download/v1.1.1/MagnifySnap-1.1.1-windows-x64.exe"><img src="https://img.shields.io/badge/⬇%20Download%20for%20Windows-x64%20.exe-4f8dfd?style=for-the-badge" alt="Download for Windows"></a>
   &nbsp;
-  <a href="https://github.com/violet2code/magnify-snap/releases/download/v1.1.0/MagnifySnap-1.1.0-linux-x64.tar.gz"><img src="https://img.shields.io/badge/⬇%20Download%20for%20Linux-x64%20.tar.gz-3ddc97?style=for-the-badge" alt="Download for Linux"></a>
+  <a href="https://github.com/violet2code/magnify-snap/releases/download/v1.1.1/MagnifySnap-1.1.1-linux-x64.tar.gz"><img src="https://img.shields.io/badge/⬇%20Download%20for%20Linux-x64%20.tar.gz-3ddc97?style=for-the-badge" alt="Download for Linux"></a>
 </p>
 
 <p align="center">
@@ -91,8 +91,9 @@ Brand assets for the website are generated into `assets/`:
 **Windows** — uses the system Magnification API
 (`MagSetFullscreenTransform`): hardware fullscreen zoom; edge panning and the
 smooth animation are computed by the app itself at 60 FPS. The bound mouse
-button is suppressed so it doesn't leak into other applications (middle-click
-won't trigger autoscroll while it is bound to the magnifier).
+button or key combination is suppressed so it doesn't leak into other
+applications: middle-click won't trigger autoscroll, and a bound Ctrl+Z
+won't perform undo in the focused window.
 
 **Linux / GNOME** — drives the built-in GNOME magnifier via `gsettings`
 (tracking mode `push` — the view moves at the edge, exactly as required).
