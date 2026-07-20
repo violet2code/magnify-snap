@@ -20,9 +20,9 @@ already have on the mouse.
 > a magnifier that gets out of your way.
 
 <p align="center">
-  <a href="https://github.com/violet2code/magnify-snap/releases/download/v1.1.1/MagnifySnap-1.1.1-windows-x64.exe"><img src="https://img.shields.io/badge/⬇%20Download%20for%20Windows-x64%20.exe-4f8dfd?style=for-the-badge" alt="Download for Windows"></a>
+  <a href="https://github.com/violet2code/magnify-snap/releases/download/v1.2.0/MagnifySnap-1.2.0-windows-x64.exe"><img src="https://img.shields.io/badge/⬇%20Download%20for%20Windows-x64%20.exe-4f8dfd?style=for-the-badge" alt="Download for Windows"></a>
   &nbsp;
-  <a href="https://github.com/violet2code/magnify-snap/releases/download/v1.1.1/MagnifySnap-1.1.1-linux-x64.tar.gz"><img src="https://img.shields.io/badge/⬇%20Download%20for%20Linux-x64%20.tar.gz-3ddc97?style=for-the-badge" alt="Download for Linux"></a>
+  <a href="https://github.com/violet2code/magnify-snap/releases/download/v1.2.0/MagnifySnap-1.2.0-linux-x64.tar.gz"><img src="https://img.shields.io/badge/⬇%20Download%20for%20Linux-x64%20.tar.gz-3ddc97?style=for-the-badge" alt="Download for Linux"></a>
 </p>
 
 <p align="center">
@@ -47,6 +47,9 @@ to tune it, the settings are one tray-click away:
 
 - **Instant zoom** — press the middle mouse button (default) to magnify the
   screen to 200%; press again to snap back to 100%.
+- **Hold to peek** — hold the button down to temporarily boost the zoom
+  (400% by default, configurable); release it and the view settles back.
+  Perfect for "let me look a bit closer for a second".
 - **Cursor-follow panning** — while zoomed, the view glides smoothly when the
   cursor approaches a screen edge.
 - **Fully interactive** — magnification happens at the OS compositor level
@@ -54,8 +57,9 @@ to tune it, the settings are one tray-click away:
   keyboard keep working normally.
 - **Customizable activation** — any mouse button, key, or combination with
   Ctrl/Alt/Shift/Win. Assigned by physically pressing it.
-- **Settings**: zoom level (125–800%), cursor follow speed, edge zone width,
-  smooth animation, appearance (System/Light/Dark), start at sign-in.
+- **Settings**: zoom level (125–800%), hold-to-peek level, cursor follow
+  speed, edge zone width, smooth animation, appearance (System/Light/Dark),
+  start at sign-in.
 - **Smooth animation** for zoom in/out.
 - Follows the **system theme** by default; single instance; the screen is
   always restored to 100% even on abnormal exit.
@@ -65,6 +69,7 @@ to tune it, the settings are one tray-click away:
 | Action | How |
 |---|---|
 | Toggle the magnifier | Middle mouse button (customizable) |
+| Peek even closer for a moment | Hold the button; release to settle back |
 | Pan the view while zoomed | Move the cursor to a screen edge |
 | Open settings | Click the tray icon → "Settings…" |
 | Quit | Right-click the tray icon → "Quit" |

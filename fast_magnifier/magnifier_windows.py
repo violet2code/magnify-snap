@@ -40,6 +40,7 @@ class WindowsMagnifier(MagnifierBase):
         self._init_ok = False
         self._quit = False
         self._instant_out = False
+        self._boost: float | None = None
         self._last = (None, None, None)
         self._fail_reported = False
 
@@ -77,10 +78,16 @@ class WindowsMagnifier(MagnifierBase):
         self._wake.set()
 
     def zoom_out(self, instant: bool = False) -> None:
+        self._boost = None
         if not self.active:
             return
         self._instant_out = instant
         self.active = False
+
+    def set_boost(self, factor: float | None) -> None:
+        # цикл панорамирования подхватит новое целевое значение и плавно
+        # доведёт масштаб (та же механика, что у живого слайдера настроек)
+        self._boost = float(factor) if factor else None
 
     # -- поток-владелец Magnification API ---------------------------------
 
@@ -181,8 +188,9 @@ class WindowsMagnifier(MagnifierBase):
 
         # основной цикл: следование за курсором у краёв экрана
         while self.active:
-            target = float(self.config.zoom_factor)
-            if abs(target - mag) > 0.004:  # живое изменение масштаба из настроек
+            boost = self._boost
+            target = float(boost) if boost else float(self.config.zoom_factor)
+            if abs(target - mag) > 0.004:  # живой зум: настройки или peek-буст
                 mag += (target - mag) * 0.2
                 if abs(target - mag) < 0.01:
                     mag = target

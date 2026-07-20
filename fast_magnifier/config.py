@@ -24,6 +24,7 @@ def config_path() -> str:
 @dataclass
 class Config:
     zoom_factor: float = 2.0        # кратность увеличения (2.0 = 200%)
+    peek_factor: float = 4.0        # усиленный зум при удержании кнопки
     pan_speed: int = 5              # скорость перемещения экрана, 1..10
     edge_size: int = 60             # ширина зоны у края экрана (px), в которой начинается прокрутка
     smooth_zoom: bool = True        # плавная анимация увеличения
@@ -43,6 +44,7 @@ class Config:
         except (OSError, ValueError):
             pass
         cfg.zoom_factor = min(8.0, max(1.25, float(cfg.zoom_factor)))
+        cfg.peek_factor = min(8.0, max(1.5, float(cfg.peek_factor)))
         cfg.pan_speed = min(10, max(1, int(cfg.pan_speed)))
         cfg.edge_size = min(150, max(10, int(cfg.edge_size)))
         if cfg.theme not in ("system", "light", "dark"):

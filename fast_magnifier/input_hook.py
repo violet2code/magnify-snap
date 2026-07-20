@@ -81,15 +81,20 @@ def key_name(key) -> str | None:
 
 
 class GlobalInput:
-    def __init__(self, binding: Binding, on_toggle):
+    """on_bound(pressed: bool) вызывается при нажатии/отпускании привязки —
+    поверх этого приложение строит логику «клик» против «удержание»."""
+
+    def __init__(self, binding: Binding, on_bound):
         self._binding = binding
-        self._on_toggle = on_toggle
+        self._on_bound = on_bound
         self._lock = threading.Lock()
         self._mods: set[str] = set()
         self._capture_cb = None
         self._capture_hint = None
         self._suppress_up: set[str] = set()
-        self._held_vk: int | None = None  # зажатая назначенная клавиша
+        self._held_vk: int | None = None    # зажатая назначенная клавиша (win)
+        self._bound_btn: str | None = None  # зажатая назначенная кнопка мыши
+        self._bound_key_down = False        # зажатая клавиша (не-win путь)
         self._kb = None
         self._ms = None
         self._ensure_vk(binding)
@@ -144,29 +149,35 @@ class GlobalInput:
 
     # -- обработка мыши ---------------------------------------------------
 
-    def _consume_mouse(self, btn: str) -> bool:
-        """True, если нажатие обработано (захват или переключение лупы)."""
+    def _consume_mouse(self, btn: str) -> str | None:
+        """'capture' | 'bound' | None — что произошло с нажатием."""
         with self._lock:
             cb = self._capture_cb
             if cb is not None:
                 self._capture_cb = None
+                self._capture_hint = None
                 mods = sorted(self._mods)
                 if btn in ("left", "right") and not mods:
                     cb(None, "Left/right button can only be bound together "
                             "with a modifier (Ctrl, Alt, Shift)")
                 else:
                     cb(Binding("mouse", btn, mods), None)
-                return True
+                return "capture"
             if self._binding.matches("mouse", btn, self._mods):
-                toggle = self._on_toggle
+                bound_cb = self._on_bound
             else:
-                return False
-        toggle()
-        return True
+                return None
+        bound_cb(True)
+        return "bound"
 
     def _on_click(self, x, y, button, pressed) -> None:  # Linux/macOS
+        btn = button.name
         if pressed:
-            self._consume_mouse(button.name)
+            if self._consume_mouse(btn) == "bound":
+                self._bound_btn = btn
+        elif btn == self._bound_btn:
+            self._bound_btn = None
+            self._on_bound(False)
 
     def _win32_filter(self, msg, data) -> bool:
         """Низкоуровневый фильтр Windows: позволяет подавлять событие."""
@@ -181,11 +192,17 @@ class GlobalInput:
             btn = "x1" if (data.mouseData >> 16) & 0xFFFF == 1 else "x2"
 
         if pressed:
-            if self._consume_mouse(btn):
+            result = self._consume_mouse(btn)
+            if result is not None:
+                if result == "bound":
+                    self._bound_btn = btn
                 self._suppress_up.add(btn)
                 self._ms.suppress_event()
         elif btn in self._suppress_up:
             self._suppress_up.discard(btn)
+            if btn == self._bound_btn:
+                self._bound_btn = None
+                self._on_bound(False)
             self._ms.suppress_event()
         return True
 
@@ -212,11 +229,12 @@ class GlobalInput:
                         fire = True
             if consume:
                 if fire:
-                    self._on_toggle()
+                    self._on_bound(True)
                 self._kb.suppress_event()
         elif msg in _WM_KEYUP:
             if self._held_vk == vk:
                 self._held_vk = None
+                self._on_bound(False)
                 self._kb.suppress_event()
         return True
 
@@ -243,11 +261,14 @@ class GlobalInput:
                 "keyboard", name, self._mods
             ):
                 if sys.platform == "win32" and self._binding.vk is not None:
-                    return  # переключение делает низкоуровневый фильтр
-                toggle = self._on_toggle
+                    return  # нажатие/отпускание делает низкоуровневый фильтр
+                if self._bound_key_down:
+                    return  # автоповтор на X11
+                self._bound_key_down = True
+                bound_cb = self._on_bound
             else:
                 return
-        toggle()
+        bound_cb(True)
 
     def _on_release(self, key) -> None:
         mod = _MOD_MAP.get(key)
@@ -259,3 +280,7 @@ class GlobalInput:
                     hint = self._capture_hint
             if hint is not None:
                 hint()
+            return
+        if self._bound_key_down and key_name(key) == self._binding.key:
+            self._bound_key_down = False
+            self._on_bound(False)

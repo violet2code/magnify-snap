@@ -19,6 +19,9 @@ class MagnifierBase:
     def zoom_out(self, instant: bool = False) -> None:
         raise NotImplementedError
 
+    def set_boost(self, factor: float | None) -> None:
+        """Временный усиленный масштаб (удержание кнопки); None — вернуть обычный."""
+
     def toggle(self) -> None:
         if self.active:
             self.zoom_out()

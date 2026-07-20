@@ -54,6 +54,16 @@ class GnomeMagnifier(MagnifierBase):
         _run(["gsettings", "set", self.SCHEMA_APP,
               "screen-magnifier-enabled", "false"])
 
+    def set_boost(self, factor: float | None) -> None:
+        if not self.active:
+            return
+        target = float(factor) if factor else float(self.config.zoom_factor)
+        threading.Thread(
+            target=lambda: _run(["gsettings", "set", self.SCHEMA_MAG,
+                                 "mag-factor", str(target)]),
+            daemon=True,
+        ).start()
+
     def shutdown(self) -> None:
         if self.active:
             self.active = False

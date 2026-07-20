@@ -70,8 +70,8 @@ class SettingsWindow(ctk.CTkToplevel):
             scale = self._get_window_scaling()
         except Exception:
             scale = 1.0
-        avail = int(self.winfo_screenheight() / scale) - 80
-        height = max(400, min(620, avail))
+        avail = int(self.winfo_screenheight() / scale) - 70
+        height = max(400, min(660, avail))
         return f"470x{height}"
 
     # -- building blocks ---------------------------------------------------
@@ -132,7 +132,29 @@ class SettingsWindow(ctk.CTkToplevel):
             button_hover_color=BLUE_HOVER, progress_color=BLUE,
         )
         self.zoom_slider.set(self.cfg.zoom_factor)
-        self.zoom_slider.pack(fill="x", padx=16, pady=(8, 12))
+        self.zoom_slider.pack(fill="x", padx=16, pady=(8, 4))
+
+        row = ctk.CTkFrame(card, fg_color="transparent")
+        row.pack(fill="x", padx=16, pady=(4, 0))
+        ctk.CTkLabel(row, text="Hold-to-peek zoom",
+                     font=ctk.CTkFont(FONT, 13)).pack(side="left")
+        self.peek_value = ctk.CTkLabel(
+            row, text=self._fmt_peek(),
+            font=ctk.CTkFont(FONT, 13, "bold"), text_color=GREEN,
+        )
+        self.peek_value.pack(side="right")
+        self.peek_slider = ctk.CTkSlider(
+            card, from_=1.5, to=8.0, number_of_steps=26,
+            command=self._on_peek, button_color=GREEN,
+            button_hover_color="#27a06e", progress_color=GREEN,
+        )
+        self.peek_slider.set(self.cfg.peek_factor)
+        self.peek_slider.pack(fill="x", padx=16, pady=(2, 2))
+        ctk.CTkLabel(
+            card, anchor="w",
+            text="Hold the button to zoom in closer, release to settle back",
+            font=ctk.CTkFont(FONT, 11), text_color=TEXT_DIM,
+        ).pack(fill="x", padx=16, pady=(0, 8))
 
     def _build_binding_card(self, parent) -> None:
         card, _ = self._card(parent, icons.icon_mouse(44), "Activation button")
@@ -244,9 +266,17 @@ class SettingsWindow(ctk.CTkToplevel):
     def _fmt_zoom(self) -> str:
         return f"{round(self.cfg.zoom_factor * 100)}%"
 
+    def _fmt_peek(self) -> str:
+        return f"{round(self.cfg.peek_factor * 100)}%"
+
     def _on_zoom(self, value: float) -> None:
         self.cfg.zoom_factor = round(value * 4) / 4
         self.zoom_value.configure(text=self._fmt_zoom())
+        self._schedule_save()
+
+    def _on_peek(self, value: float) -> None:
+        self.cfg.peek_factor = round(value * 4) / 4
+        self.peek_value.configure(text=self._fmt_peek())
         self._schedule_save()
 
     def _on_speed(self, value: float) -> None:

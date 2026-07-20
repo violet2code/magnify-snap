@@ -8,8 +8,10 @@ import atexit
 import ctypes
 import socket
 import sys
+import threading
 
 SINGLE_INSTANCE_PORT = 47653
+HOLD_PEEK_DELAY = 0.30  # сек: дольше — «подглядывание», короче — обычный клик
 
 
 def set_dpi_aware() -> None:
@@ -62,7 +64,14 @@ class FastMagnifierApp:
             is_active=lambda: self.magnifier.active,
         )
         self.magnifier = self._create_magnifier()
-        self.input = GlobalInput(self.binding, self.on_toggle)
+        self.input = GlobalInput(self.binding, self.on_bound)
+
+        # состояние «клик против удержания»
+        self._hold_lock = threading.Lock()
+        self._pressed = False
+        self._entered_on_press = False
+        self._peeking = False
+        self._hold_timer = None
 
     def _create_magnifier(self):
         from fast_magnifier.magnifier_base import NullMagnifier
@@ -89,8 +98,53 @@ class FastMagnifierApp:
             pass
 
     def on_toggle(self) -> None:
+        """Простое переключение — используется пунктом меню в трее."""
         self.magnifier.toggle()
         self.tray.set_active(self.magnifier.active)
+
+    def on_bound(self, pressed: bool) -> None:
+        """Нажатие/отпускание привязанной кнопки.
+
+        Короткий клик: включить лупу / выключить, как обычно.
+        Удержание (> HOLD_PEEK_DELAY): временно усилить зум до peek_factor,
+        отпускание возвращает обычный масштаб (лупа остаётся включённой).
+        """
+        with self._hold_lock:
+            if pressed:
+                if self._pressed:
+                    return  # автоповтор клавиатуры
+                self._pressed = True
+                self._peeking = False
+                self._entered_on_press = not self.magnifier.active
+                if self._entered_on_press:
+                    self.magnifier.zoom_in()  # мгновенно, как раньше
+                self._hold_timer = threading.Timer(
+                    HOLD_PEEK_DELAY, self._begin_peek
+                )
+                self._hold_timer.daemon = True
+                self._hold_timer.start()
+            else:
+                if not self._pressed:
+                    return
+                self._pressed = False
+                if self._hold_timer is not None:
+                    self._hold_timer.cancel()
+                    self._hold_timer = None
+                if self._peeking:
+                    self._peeking = False
+                    self.magnifier.set_boost(None)  # осесть на обычный зум
+                elif not self._entered_on_press:
+                    self.magnifier.zoom_out()  # быстрый клик при активной лупе
+        self.tray.set_active(self.magnifier.active)
+
+    def _begin_peek(self) -> None:
+        with self._hold_lock:
+            if not self._pressed or not self.magnifier.active:
+                return
+            self._peeking = True
+            peek = max(float(self.cfg.peek_factor),
+                       float(self.cfg.zoom_factor))
+            self.magnifier.set_boost(peek)
 
     def open_settings(self) -> None:
         def _open():
