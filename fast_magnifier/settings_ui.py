@@ -1,7 +1,7 @@
 """Settings window — customtkinter, follows the system theme, branded header.
 
-Компактная вертикальная компоновка: высота окна подстраивается под монитор
-(с учётом DPI-масштаба), контент прокручивается, только если совсем не влез.
+Горизонтальная двухколоночная компоновка: помещается на любой экран
+по вертикали, отступы просторные, подсказки на месте.
 """
 import sys
 
@@ -14,6 +14,7 @@ from .binding import Binding
 BLUE = "#4f8dfd"
 BLUE_HOVER = "#3a76e0"
 GREEN = "#2fbe83"
+GREEN_HOVER = "#27a06e"
 CARD = ("#eef1f7", "#23262e")
 TEXT_DIM = ("#5c6470", "#9aa3b2")
 WARN_RED = "#e5484d"
@@ -21,6 +22,10 @@ AMBER = "#e8a33d"
 
 FONT = "Segoe UI" if sys.platform == "win32" else "Ubuntu"
 THEME_VALUES = {"System": "system", "Light": "light", "Dark": "dark"}
+
+BIND_HINT = "One press zooms in, another zooms back out"
+PEEK_HINT = "Hold the button to zoom in closer, release to settle back"
+PEEK_WARN = "Peek level is not above the zoom level — holding won't zoom further"
 
 
 class SettingsWindow(ctk.CTkToplevel):
@@ -44,20 +49,28 @@ class SettingsWindow(ctk.CTkToplevel):
 
         self.title(f"{APP_NAME} — Settings")
         self.geometry(self._fit_geometry())
-        self.resizable(False, True)
-        self.minsize(470, 400)
+        self.resizable(False, False)
         self.protocol("WM_DELETE_WINDOW", self._on_close)
         self.after(180, self._set_window_icon)
 
-        body = ctk.CTkScrollableFrame(self, fg_color="transparent")
-        body.pack(fill="both", expand=True, padx=10, pady=(8, 0))
+        body = ctk.CTkFrame(self, fg_color="transparent")
+        body.pack(fill="both", expand=True, padx=16, pady=(12, 4))
 
         self._build_header(body)
-        self._build_zoom_card(body)
-        self._build_binding_card(body)
-        self._build_pan_card(body)
-        self._build_misc_card(body)
+
+        cols = ctk.CTkFrame(body, fg_color="transparent")
+        cols.pack(fill="both", expand=True)
+        left = ctk.CTkFrame(cols, fg_color="transparent")
+        left.pack(side="left", fill="both", expand=True, padx=(0, 8))
+        right = ctk.CTkFrame(cols, fg_color="transparent")
+        right.pack(side="left", fill="both", expand=True, padx=(8, 0))
+
+        self._build_zoom_card(left)
+        self._build_binding_card(left)
+        self._build_pan_card(right)
+        self._build_misc_card(right)
         self._build_footer()
+        self._refresh_peek_state()
 
         self.lift()
         self.attributes("-topmost", True)
@@ -65,14 +78,22 @@ class SettingsWindow(ctk.CTkToplevel):
         self.focus_force()
 
     def _fit_geometry(self) -> str:
-        """Окно не должно вылезать за экран при любом DPI-масштабе."""
+        """Широкое невысокое окно по центру рабочей области."""
         try:
             scale = self._get_window_scaling()
         except Exception:
             scale = 1.0
-        avail = int(self.winfo_screenheight() / scale) - 70
-        height = max(400, min(660, avail))
-        return f"470x{height}"
+        width, height = 880, 505
+        try:
+            sw = int(self.winfo_screenwidth() / scale)
+            sh = int(self.winfo_screenheight() / scale)
+            width = min(width, sw - 40)
+            height = min(height, sh - 80)
+            x = max(0, (sw - width) // 2)
+            y = max(0, (sh - height) // 3)
+            return f"{width}x{height}+{x}+{y}"
+        except Exception:
+            return f"{width}x{height}"
 
     # -- building blocks ---------------------------------------------------
 
@@ -86,9 +107,9 @@ class SettingsWindow(ctk.CTkToplevel):
 
     def _card(self, parent, icon_img, title: str):
         card = ctk.CTkFrame(parent, corner_radius=14, fg_color=CARD)
-        card.pack(fill="x", pady=(0, 8))
+        card.pack(fill="x", pady=(0, 12))
         head = ctk.CTkFrame(card, fg_color="transparent")
-        head.pack(fill="x", padx=14, pady=(8, 0))
+        head.pack(fill="x", padx=16, pady=(12, 2))
         img = ctk.CTkImage(icon_img, size=(20, 20))
         ctk.CTkLabel(head, image=img, text="").pack(side="left")
         ctk.CTkLabel(
@@ -99,8 +120,8 @@ class SettingsWindow(ctk.CTkToplevel):
 
     def _build_header(self, parent) -> None:
         head = ctk.CTkFrame(parent, fg_color="transparent")
-        head.pack(fill="x", pady=(0, 8))
-        logo = ctk.CTkImage(icons.magnifier_image(96), size=(40, 40))
+        head.pack(fill="x", pady=(0, 10))
+        logo = ctk.CTkImage(icons.magnifier_image(96), size=(42, 42))
         ctk.CTkLabel(head, image=logo, text="").pack(side="left")
         txt = ctk.CTkFrame(head, fg_color="transparent")
         txt.pack(side="left", padx=(10, 0))
@@ -108,11 +129,11 @@ class SettingsWindow(ctk.CTkToplevel):
         word.pack(anchor="w")
         ctk.CTkLabel(
             word, text="Magnify", text_color=BLUE,
-            font=ctk.CTkFont(FONT, 20, "bold"),
+            font=ctk.CTkFont(FONT, 21, "bold"),
         ).pack(side="left")
         ctk.CTkLabel(
             word, text=".Snap", text_color=GREEN,
-            font=ctk.CTkFont(FONT, 20, "bold"),
+            font=ctk.CTkFont(FONT, 21, "bold"),
         ).pack(side="left")
         ctk.CTkLabel(
             txt, text="Fast screen magnifier", anchor="w",
@@ -132,10 +153,10 @@ class SettingsWindow(ctk.CTkToplevel):
             button_hover_color=BLUE_HOVER, progress_color=BLUE,
         )
         self.zoom_slider.set(self.cfg.zoom_factor)
-        self.zoom_slider.pack(fill="x", padx=16, pady=(8, 4))
+        self.zoom_slider.pack(fill="x", padx=18, pady=(10, 8))
 
         row = ctk.CTkFrame(card, fg_color="transparent")
-        row.pack(fill="x", padx=16, pady=(4, 0))
+        row.pack(fill="x", padx=18, pady=(4, 0))
         ctk.CTkLabel(row, text="Hold-to-peek zoom",
                      font=ctk.CTkFont(FONT, 13)).pack(side="left")
         self.peek_value = ctk.CTkLabel(
@@ -146,44 +167,43 @@ class SettingsWindow(ctk.CTkToplevel):
         self.peek_slider = ctk.CTkSlider(
             card, from_=1.5, to=8.0, number_of_steps=26,
             command=self._on_peek, button_color=GREEN,
-            button_hover_color="#27a06e", progress_color=GREEN,
+            button_hover_color=GREEN_HOVER, progress_color=GREEN,
         )
         self.peek_slider.set(self.cfg.peek_factor)
-        self.peek_slider.pack(fill="x", padx=16, pady=(2, 2))
-        ctk.CTkLabel(
-            card, anchor="w",
-            text="Hold the button to zoom in closer, release to settle back",
+        self.peek_slider.pack(fill="x", padx=18, pady=(4, 4))
+        self.peek_hint = ctk.CTkLabel(
+            card, anchor="w", justify="left", text=PEEK_HINT,
             font=ctk.CTkFont(FONT, 11), text_color=TEXT_DIM,
-        ).pack(fill="x", padx=16, pady=(0, 8))
+        )
+        self.peek_hint.pack(fill="x", padx=18, pady=(0, 12))
 
     def _build_binding_card(self, parent) -> None:
         card, _ = self._card(parent, icons.icon_mouse(44), "Activation button")
         row = ctk.CTkFrame(card, fg_color="transparent")
-        row.pack(fill="x", padx=16, pady=(8, 2))
+        row.pack(fill="x", padx=18, pady=(10, 4))
         self.bind_label = ctk.CTkLabel(
             row, text=self.app.binding.display(), anchor="w",
-            font=ctk.CTkFont(FONT, 14, "bold"), text_color=GREEN,
+            font=ctk.CTkFont(FONT, 15, "bold"), text_color=GREEN,
         )
         self.bind_label.pack(side="left", fill="x", expand=True)
         self.bind_button = ctk.CTkButton(
-            row, text="Change…", height=30, width=104, corner_radius=10,
+            row, text="Change…", height=32, width=110, corner_radius=10,
             fg_color=BLUE, hover_color=BLUE_HOVER,
             font=ctk.CTkFont(FONT, 13, "bold"),
             command=self._begin_capture,
         )
         self.bind_button.pack(side="right")
         self.bind_hint = ctk.CTkLabel(
-            card, anchor="w",
-            text="One press zooms in, another zooms back out",
+            card, anchor="w", justify="left", text=BIND_HINT,
             font=ctk.CTkFont(FONT, 11), text_color=TEXT_DIM,
         )
-        self.bind_hint.pack(fill="x", padx=16, pady=(0, 8))
+        self.bind_hint.pack(fill="x", padx=18, pady=(0, 12))
 
     def _build_pan_card(self, parent) -> None:
         card, _ = self._card(parent, icons.icon_move(44), "Screen panning")
 
         row1 = ctk.CTkFrame(card, fg_color="transparent")
-        row1.pack(fill="x", padx=16, pady=(6, 0))
+        row1.pack(fill="x", padx=18, pady=(8, 0))
         ctk.CTkLabel(row1, text="Cursor follow speed",
                      font=ctk.CTkFont(FONT, 13)).pack(side="left")
         self.speed_value = ctk.CTkLabel(
@@ -197,10 +217,10 @@ class SettingsWindow(ctk.CTkToplevel):
             button_hover_color=BLUE_HOVER, progress_color=BLUE,
         )
         self.speed_slider.set(self.cfg.pan_speed)
-        self.speed_slider.pack(fill="x", padx=16, pady=(2, 4))
+        self.speed_slider.pack(fill="x", padx=18, pady=(4, 8))
 
         row2 = ctk.CTkFrame(card, fg_color="transparent")
-        row2.pack(fill="x", padx=16, pady=(2, 0))
+        row2.pack(fill="x", padx=18, pady=(2, 0))
         ctk.CTkLabel(row2, text="Edge reaction zone",
                      font=ctk.CTkFont(FONT, 13)).pack(side="left")
         self.edge_value = ctk.CTkLabel(
@@ -214,13 +234,18 @@ class SettingsWindow(ctk.CTkToplevel):
             button_hover_color=BLUE_HOVER, progress_color=BLUE,
         )
         self.edge_slider.set(self.cfg.edge_size)
-        self.edge_slider.pack(fill="x", padx=16, pady=(2, 8))
+        self.edge_slider.pack(fill="x", padx=18, pady=(4, 4))
+        ctk.CTkLabel(
+            card, anchor="w", justify="left",
+            text="While zoomed, the view follows the cursor near screen edges",
+            font=ctk.CTkFont(FONT, 11), text_color=TEXT_DIM,
+        ).pack(fill="x", padx=18, pady=(0, 12))
 
     def _build_misc_card(self, parent) -> None:
         card, _ = self._card(parent, icons.icon_gear(44), "Preferences")
 
         row = ctk.CTkFrame(card, fg_color="transparent")
-        row.pack(fill="x", padx=16, pady=(6, 0))
+        row.pack(fill="x", padx=18, pady=(8, 2))
         ctk.CTkLabel(row, text="Appearance",
                      font=ctk.CTkFont(FONT, 13)).pack(side="left")
         current = next(
@@ -241,7 +266,7 @@ class SettingsWindow(ctk.CTkToplevel):
             font=ctk.CTkFont(FONT, 13), progress_color=BLUE,
             command=self._on_smooth,
         )
-        self.smooth_switch.pack(anchor="w", padx=16, pady=(4, 0))
+        self.smooth_switch.pack(anchor="w", padx=18, pady=(8, 2))
         if self.cfg.smooth_zoom:
             self.smooth_switch.select()
 
@@ -250,7 +275,7 @@ class SettingsWindow(ctk.CTkToplevel):
             font=ctk.CTkFont(FONT, 13), progress_color=BLUE,
             command=self._on_autostart,
         )
-        self.autostart_switch.pack(anchor="w", padx=16, pady=(2, 8))
+        self.autostart_switch.pack(anchor="w", padx=18, pady=(4, 12))
         if autostart.is_enabled():
             self.autostart_switch.select()
 
@@ -259,7 +284,7 @@ class SettingsWindow(ctk.CTkToplevel):
             self,
             text=f"{APP_NAME} v{VERSION} · lives in the system tray",
             font=ctk.CTkFont(FONT, 11), text_color=TEXT_DIM,
-        ).pack(pady=(0, 4))
+        ).pack(pady=(0, 8))
 
     # -- handlers -----------------------------------------------------------
 
@@ -269,14 +294,25 @@ class SettingsWindow(ctk.CTkToplevel):
     def _fmt_peek(self) -> str:
         return f"{round(self.cfg.peek_factor * 100)}%"
 
+    def _refresh_peek_state(self) -> None:
+        """Подсветить, если peek не выше обычного зума (удержание бесполезно)."""
+        if self.cfg.peek_factor <= self.cfg.zoom_factor:
+            self.peek_value.configure(text_color=AMBER)
+            self.peek_hint.configure(text=PEEK_WARN, text_color=AMBER)
+        else:
+            self.peek_value.configure(text_color=GREEN)
+            self.peek_hint.configure(text=PEEK_HINT, text_color=TEXT_DIM)
+
     def _on_zoom(self, value: float) -> None:
         self.cfg.zoom_factor = round(value * 4) / 4
         self.zoom_value.configure(text=self._fmt_zoom())
+        self._refresh_peek_state()
         self._schedule_save()
 
     def _on_peek(self, value: float) -> None:
         self.cfg.peek_factor = round(value * 4) / 4
         self.peek_value.configure(text=self._fmt_peek())
+        self._refresh_peek_state()
         self._schedule_save()
 
     def _on_speed(self, value: float) -> None:
@@ -335,23 +371,22 @@ class SettingsWindow(ctk.CTkToplevel):
         if not self.winfo_exists():
             return
         self.bind_button.configure(state="normal")
-        default_hint = "One press zooms in, another zooms back out"
         if binding is not None:
             self.app.apply_binding(binding)
             self.bind_label.configure(text=binding.display(), text_color=GREEN)
-            self.bind_hint.configure(text=default_hint, text_color=TEXT_DIM)
+            self.bind_hint.configure(text=BIND_HINT, text_color=TEXT_DIM)
         else:
             self.bind_label.configure(
                 text=self.app.binding.display(), text_color=GREEN
             )
             self.bind_hint.configure(
-                text=error or default_hint,
+                text=error or BIND_HINT,
                 text_color=WARN_RED if error else TEXT_DIM,
             )
             if error:
                 self.after(4000, lambda: self.winfo_exists() and
                            self.bind_hint.configure(
-                               text=default_hint, text_color=TEXT_DIM))
+                               text=BIND_HINT, text_color=TEXT_DIM))
 
     def _schedule_save(self) -> None:
         if self._save_job is not None:
