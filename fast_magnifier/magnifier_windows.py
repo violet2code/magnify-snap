@@ -187,21 +187,50 @@ class WindowsMagnifier(MagnifierBase):
         self._set(mag, offx, offy)
 
         # основной цикл: следование за курсором у краёв экрана
+        peek_saved = None    # положение окна до подглядывания
+        restoring = False    # возвращаемся к сохранённому положению
+        prev_boost = None
         while self.active:
             boost = self._boost
+            if boost is not None and prev_boost is None:
+                peek_saved = (offx, offy)   # запомнить вид до буста
+                restoring = False
+            elif boost is None and prev_boost is not None:
+                restoring = peek_saved is not None
+            prev_boost = boost
+
             target = float(boost) if boost else float(self.config.zoom_factor)
-            if abs(target - mag) > 0.004:  # живой зум: настройки или peek-буст
-                mag += (target - mag) * 0.2
-                if abs(target - mag) < 0.01:
-                    mag = target
+            zooming = abs(target - mag) > 0.004
+            if zooming:  # живой зум: peek-буст или слайдер настроек
+                new_mag = mag + (target - mag) * 0.2
+                if abs(target - new_mag) < 0.01:
+                    new_mag = target
+                if not restoring:
+                    # якорим на курсор: точка под ним остаётся на месте,
+                    # как при первоначальном включении лупы
+                    cx, cy = self._cursor()
+                    offx = cx - (cx - offx) * (mag / new_mag)
+                    offy = cy - (cy - offy) * (mag / new_mag)
+                mag = new_mag
                 offx = self._clamp(offx, vx, vx + vw - vw / mag)
                 offy = self._clamp(offy, vy, vy + vh - vh / mag)
 
-            cx, cy = self._cursor()
-            sx = (cx - offx) * mag  # позиция курсора на физическом экране
-            sy = (cy - offy) * mag
-            offx = self._pan_axis(sx, vw, offx, mag, vx, vw)
-            offy = self._pan_axis(sy, vh, offy, mag, vy, vh)
+            if restoring:
+                # плавный возврат к виду, каким он был до подглядывания
+                tx = self._clamp(peek_saved[0], vx, vx + vw - vw / mag)
+                ty = self._clamp(peek_saved[1], vy, vy + vh - vh / mag)
+                offx += (tx - offx) * 0.2
+                offy += (ty - offy) * 0.2
+                if not zooming and abs(tx - offx) < 1 and abs(ty - offy) < 1:
+                    offx, offy = tx, ty
+                    restoring = False
+                    peek_saved = None
+            elif not zooming:  # пан заморожен на время зум-перехода
+                cx, cy = self._cursor()
+                sx = (cx - offx) * mag  # позиция курсора на физическом экране
+                sy = (cy - offy) * mag
+                offx = self._pan_axis(sx, vw, offx, mag, vx, vw)
+                offy = self._pan_axis(sy, vh, offy, mag, vy, vh)
 
             self._set(mag, offx, offy)
             time.sleep(FRAME_DT)
