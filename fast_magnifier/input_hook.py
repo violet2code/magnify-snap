@@ -66,16 +66,20 @@ def vk_from_name(name: str) -> int | None:
 
 
 def key_name(key) -> str | None:
-    """Стабильное имя клавиши, одинаковое при захвате и при проверке."""
+    """Стабильное имя клавиши, одинаковое при захвате и при проверке.
+
+    Для буквенно-цифровых клавиш имя всегда латинское (физическая клавиша,
+    по vk) — не зависит от раскладки: Shift+Z остаётся «Z», а не «Я».
+    """
     if isinstance(key, Key):
         return key.name
+    vk = getattr(key, "vk", None)
+    if vk is not None and (0x30 <= vk <= 0x39 or 0x41 <= vk <= 0x5A):
+        return chr(vk).lower()  # 0-9, A-Z — независимо от раскладки
     ch = getattr(key, "char", None)
     if ch and ch.isprintable() and not ch.isspace():
         return ch.lower()
-    vk = getattr(key, "vk", None)
     if vk is not None:
-        if 0x30 <= vk <= 0x39 or 0x41 <= vk <= 0x5A:  # 0-9, A-Z
-            return chr(vk).lower()
         return f"vk{vk}"
     return None
 
@@ -101,9 +105,16 @@ class GlobalInput:
 
     @staticmethod
     def _ensure_vk(binding: Binding) -> None:
-        if (sys.platform == "win32" and binding.kind == "keyboard"
-                and binding.vk is None):
+        if sys.platform != "win32" or binding.kind != "keyboard":
+            return
+        if binding.vk is None:
             binding.vk = vk_from_name(binding.key)
+        # миграция старых конфигов: буква, записанная в национальной
+        # раскладке («я»), нормализуется к латинскому имени клавиши («z»)
+        if binding.vk is not None and (
+            0x30 <= binding.vk <= 0x39 or 0x41 <= binding.vk <= 0x5A
+        ):
+            binding.key = chr(binding.vk).lower()
 
     # -- API ------------------------------------------------------------
 
