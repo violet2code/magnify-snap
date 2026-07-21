@@ -20,9 +20,9 @@ already have on the mouse.
 > a magnifier that gets out of your way.
 
 <p align="center">
-  <a href="https://github.com/violet2code/magnify-snap/releases/download/v1.2.2/MagnifySnap-1.2.2-windows-x64.exe"><img src="https://img.shields.io/badge/⬇%20Download%20for%20Windows-x64%20.exe-4f8dfd?style=for-the-badge" alt="Download for Windows"></a>
+  <a href="https://github.com/violet2code/magnify-snap/releases/download/v1.3.0/MagnifySnap-1.3.0-windows-x64.exe"><img src="https://img.shields.io/badge/⬇%20Download%20for%20Windows-x64%20.exe-4f8dfd?style=for-the-badge" alt="Download for Windows"></a>
   &nbsp;
-  <a href="https://github.com/violet2code/magnify-snap/releases/download/v1.2.2/MagnifySnap-1.2.2-linux-x64.tar.gz"><img src="https://img.shields.io/badge/⬇%20Download%20for%20Linux-x64%20.tar.gz-3ddc97?style=for-the-badge" alt="Download for Linux"></a>
+  <a href="https://github.com/violet2code/magnify-snap/releases/download/v1.3.0/MagnifySnap-1.3.0-linux-x64.tar.gz"><img src="https://img.shields.io/badge/⬇%20Download%20for%20Linux-x64%20.tar.gz-3ddc97?style=for-the-badge" alt="Download for Linux"></a>
 </p>
 
 <p align="center">
@@ -61,6 +61,10 @@ to tune it, the settings are one tray-click away:
   speed, edge zone width, smooth animation, appearance (System/Light/Dark),
   start at sign-in.
 - **Smooth animation** for zoom in/out.
+- **Built-in updater** — the tray notifies you when a new version is out;
+  one click downloads it (SHA256-verified) and the app restarts updated.
+  The daily check is a single anonymous GitHub API request and can be
+  turned off in settings.
 - Follows the **system theme** by default; single instance; the screen is
   always restored to 100% even on abnormal exit.
 

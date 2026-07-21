@@ -6,12 +6,15 @@ The app minimizes straight to the system tray. The middle mouse button
 """
 import atexit
 import ctypes
+import os
 import socket
 import sys
 import threading
 
-SINGLE_INSTANCE_PORT = 47653
+SINGLE_INSTANCE_PORT = int(os.environ.get("MAGNIFYSNAP_PORT", 47653))
 HOLD_PEEK_DELAY = 0.30  # сек: дольше — «подглядывание», короче — обычный клик
+UPDATE_CHECK_DELAY = 12          # сек после запуска
+UPDATE_CHECK_INTERVAL = 86400    # раз в сутки
 
 
 def set_dpi_aware() -> None:
@@ -72,6 +75,12 @@ class FastMagnifierApp:
         self._entered_on_press = False
         self._peeking = False
         self._hold_timer = None
+
+        # обновления
+        self.lock_socket = None          # single-instance порт (закрыть перед релончем)
+        self.update_info = None          # {'version', 'url', 'sha256'} если есть новее
+        self._update_notified = None
+        self._updating = False
 
     def _create_magnifier(self):
         from fast_magnifier.magnifier_base import NullMagnifier
@@ -161,12 +170,96 @@ class FastMagnifierApp:
     def request_quit(self) -> None:
         self.ui_call(self.root.quit)
 
+    # -- обновления ---------------------------------------------------------
+
+    def start_update_checks(self) -> None:
+        from fast_magnifier import updater
+        if not self.cfg.auto_update_check or not updater.is_frozen():
+            return
+        delay = UPDATE_CHECK_DELAY
+        if os.environ.get("MAGNIFYSNAP_UPDATE_API"):  # тестовый режим
+            delay = 2
+
+        def loop():
+            self.check_updates()
+            timer = threading.Timer(UPDATE_CHECK_INTERVAL, loop)
+            timer.daemon = True
+            timer.start()
+
+        timer = threading.Timer(delay, loop)
+        timer.daemon = True
+        timer.start()
+
+    def check_updates(self, on_result=None) -> None:
+        """Фоновая проверка; on_result(info|None|Exception) — для окна настроек."""
+        from fast_magnifier import updater
+
+        def work():
+            try:
+                info = updater.check_latest()
+            except Exception as exc:
+                if on_result:
+                    on_result(exc)
+                return
+            if info and info["newer"]:
+                self.update_info = info
+                label = f"Update to v{info['version']}…"
+                self.tray.set_update(label, self.do_update)
+                if self._update_notified != info["version"]:
+                    self._update_notified = info["version"]
+                    self.tray.notify(
+                        f"Version {info['version']} is available — "
+                        "update from the tray menu or settings"
+                    )
+                if os.environ.get("MAGNIFYSNAP_AUTOTEST_UPDATE") == "1":
+                    self.do_update()  # только для автотестов
+            if on_result:
+                on_result(self.update_info)
+
+        threading.Thread(target=work, daemon=True).start()
+
+    def do_update(self) -> None:
+        """Скачать, проверить, заменить себя и перезапуститься."""
+        from fast_magnifier import updater
+        if self._updating or self.update_info is None:
+            return
+        self._updating = True
+
+        def work():
+            info = self.update_info
+            try:
+                managed = updater.managed_install()
+                if managed == "winget":
+                    self.tray.notify(
+                        "This copy is managed by WinGet — run: "
+                        "winget upgrade magnifysnap"
+                    )
+                    return
+                self.tray.notify(f"Downloading version {info['version']}…")
+                path = updater.download_verified(info["url"], info["sha256"])
+                # помощник дождётся нашего полного завершения и подменит файл;
+                # нам остаётся штатно выйти
+                updater.apply_update(path)
+                self.request_quit()
+            except Exception as exc:
+                self.tray.notify(f"Update failed: {exc}")
+                self._updating = False
+
+        threading.Thread(target=work, daemon=True).start()
+
     # -- запуск/остановка ----------------------------------------------------
+
+    def _heartbeat(self) -> None:
+        """Регулярно будит tk-цикл: без этого root.after из других потоков
+        (ui_call, request_quit) может ждать события от пользователя вечно."""
+        self.root.after(200, self._heartbeat)
 
     def run(self) -> None:
         atexit.register(self._cleanup)
         self.input.start()
         self.tray.run()
+        self.start_update_checks()
+        self.root.after(200, self._heartbeat)
         try:
             self.root.mainloop()
         finally:
@@ -195,8 +288,12 @@ def main() -> int:
             pass
         return 1
     app = FastMagnifierApp()
+    app.lock_socket = lock
     app.run()
-    lock.close()
+    try:
+        lock.close()
+    except OSError:
+        pass
     return 0
 
 

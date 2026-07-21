@@ -83,7 +83,7 @@ class SettingsWindow(ctk.CTkToplevel):
             scale = self._get_window_scaling()
         except Exception:
             scale = 1.0
-        width, height = 880, 505
+        width, height = 880, 515
         try:
             sw = int(self.winfo_screenwidth() / scale)
             sh = int(self.winfo_screenheight() / scale)
@@ -275,9 +275,34 @@ class SettingsWindow(ctk.CTkToplevel):
             font=ctk.CTkFont(FONT, 13), progress_color=BLUE,
             command=self._on_autostart,
         )
-        self.autostart_switch.pack(anchor="w", padx=18, pady=(4, 12))
+        self.autostart_switch.pack(anchor="w", padx=18, pady=(4, 2))
         if autostart.is_enabled():
             self.autostart_switch.select()
+
+        self.update_switch = ctk.CTkSwitch(
+            card, text="Check for updates daily",
+            font=ctk.CTkFont(FONT, 13), progress_color=BLUE,
+            command=self._on_update_switch,
+        )
+        self.update_switch.pack(anchor="w", padx=18, pady=(2, 4))
+        if self.cfg.auto_update_check:
+            self.update_switch.select()
+
+        row2 = ctk.CTkFrame(card, fg_color="transparent")
+        row2.pack(fill="x", padx=18, pady=(2, 12))
+        self.version_label = ctk.CTkLabel(
+            row2, text=f"Version {VERSION}", anchor="w",
+            font=ctk.CTkFont(FONT, 12), text_color=TEXT_DIM,
+        )
+        self.version_label.pack(side="left")
+        self.update_button = ctk.CTkButton(
+            row2, text="Check for updates", height=28, width=150,
+            corner_radius=8, fg_color=BLUE, hover_color=BLUE_HOVER,
+            font=ctk.CTkFont(FONT, 12, "bold"),
+            command=self._on_check_updates,
+        )
+        self.update_button.pack(side="right")
+        self._sync_update_button()
 
     def _build_footer(self) -> None:
         ctk.CTkLabel(
@@ -341,6 +366,46 @@ class SettingsWindow(ctk.CTkToplevel):
              else self.autostart_switch.select)()
         self.cfg.autostart = enabled
         self._schedule_save()
+
+    def _on_update_switch(self) -> None:
+        self.cfg.auto_update_check = bool(self.update_switch.get())
+        self._schedule_save()
+
+    def _sync_update_button(self) -> None:
+        from . import updater
+        info = self.app.update_info
+        if info is not None:
+            self.update_button.configure(
+                text=f"Update to {info['version']}", fg_color=GREEN,
+                hover_color=GREEN_HOVER, command=self.app.do_update,
+                state="normal",
+            )
+            self.version_label.configure(
+                text=f"Version {VERSION} → {info['version']} available",
+                text_color=GREEN,
+            )
+        elif not updater.is_frozen():
+            self.update_button.configure(state="disabled",
+                                         text="Running from source")
+
+    def _on_check_updates(self) -> None:
+        self.update_button.configure(state="disabled", text="Checking…")
+        self.app.check_updates(on_result=lambda res: self.app.ui_call(
+            lambda: self._show_check_result(res)))
+
+    def _show_check_result(self, result) -> None:
+        if not self.winfo_exists():
+            return
+        self.update_button.configure(state="normal", text="Check for updates")
+        if isinstance(result, Exception):
+            self.version_label.configure(
+                text="Could not check — are you online?", text_color=AMBER)
+        elif result is None:
+            self.version_label.configure(
+                text=f"Version {VERSION} — you're up to date",
+                text_color=TEXT_DIM)
+        else:
+            self._sync_update_button()
 
     def _begin_capture(self) -> None:
         if self._capturing:
