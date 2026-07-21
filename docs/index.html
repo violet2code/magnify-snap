@@ -27,7 +27,41 @@
   "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" },
   "url": "https://violet2code.github.io/",
   "downloadUrl": "https://github.com/violet2code/magnify-snap/releases/latest",
+  "license": "https://github.com/violet2code/magnify-snap/blob/master/LICENSE",
   "image": "https://violet2code.github.io/og.png"
+}
+</script>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+    {
+      "@type": "Question",
+      "name": "Is Magnify.Snap really free?",
+      "acceptedAnswer": { "@type": "Answer", "text": "Yes. Magnify.Snap is free and open source under the MIT license, with no ads, no telemetry and no paid tiers. It's a single portable file — no installer." }
+    },
+    {
+      "@type": "Question",
+      "name": "How is it different from the built-in Windows Magnifier?",
+      "acceptedAnswer": { "@type": "Answer", "text": "The built-in magnifier needs key combos to start, zoom and quit, and keeps a toolbar on screen. Magnify.Snap is one mouse button: middle-click zooms to 200%, another click snaps back, and holding the button peeks even closer. Nothing else appears on your screen." }
+    },
+    {
+      "@type": "Question",
+      "name": "Can I still click and type while the screen is zoomed?",
+      "acceptedAnswer": { "@type": "Answer", "text": "Yes. Magnification happens at the OS compositor level, so the screen stays fully interactive — click buttons, type text, drag windows as usual." }
+    },
+    {
+      "@type": "Question",
+      "name": "Can I use a different button or key?",
+      "acceptedAnswer": { "@type": "Answer", "text": "Yes. Any mouse button, keyboard key or combination with Ctrl, Alt, Shift or Win can be the trigger — you assign it by physically pressing it in the settings." }
+    },
+    {
+      "@type": "Question",
+      "name": "Does Magnify.Snap work on Linux?",
+      "acceptedAnswer": { "@type": "Answer", "text": "Yes. On GNOME it drives the built-in magnifier and on KDE Plasma the KWin Zoom effect. Global input capture works best on X11 sessions." }
+    }
+  ]
 }
 </script>
 <style>
@@ -134,6 +168,15 @@
   .shots-text p { margin-bottom: 14px; }
   .shots-text p:first-child { color: var(--text); font-size: 17px; }
 
+  section.faq { padding: 48px 0 8px; }
+  .faq-list { max-width: 760px; margin: 0 auto; }
+  .faq-list details {
+    background: var(--card); border: 1px solid var(--card-border);
+    border-radius: 12px; padding: 16px 20px; margin-bottom: 10px;
+  }
+  .faq-list summary { cursor: pointer; font-weight: 600; font-size: 16px; }
+  .faq-list details p { color: var(--dim); font-size: 14.5px; padding-top: 10px; }
+
   footer { padding: 48px 0 40px; text-align: center; color: var(--dim); font-size: 14px; }
   footer a { color: var(--blue); text-decoration: none; }
 </style>
@@ -234,6 +277,32 @@
         themes, autostart.</p>
         <p>No installer. No ads. No telemetry. A single portable file.</p>
       </div>
+    </div>
+  </section>
+
+  <section class="faq wrap">
+    <h2>Questions people ask</h2>
+    <div class="faq-list">
+      <details>
+        <summary>Is Magnify.Snap really free?</summary>
+        <p>Yes. Free and open source (MIT license), no ads, no telemetry, no paid tiers. A single portable file — no installer.</p>
+      </details>
+      <details>
+        <summary>How is it different from the built-in Windows Magnifier?</summary>
+        <p>The built-in magnifier wants key combos to start, zoom and quit, and parks a toolbar on your screen. Magnify.Snap is one mouse button: middle-click zooms to 200%, another click snaps back, holding the button peeks even closer. Nothing else appears on screen.</p>
+      </details>
+      <details>
+        <summary>Can I still click and type while zoomed?</summary>
+        <p>Yes — magnification happens at the OS compositor level, so the screen stays fully interactive: click, type, drag windows as usual.</p>
+      </details>
+      <details>
+        <summary>Can I use a different button or key?</summary>
+        <p>Any mouse button, key, or combination with Ctrl/Alt/Shift/Win. Assign it by physically pressing it in the settings.</p>
+      </details>
+      <details>
+        <summary>Does it work on Linux?</summary>
+        <p>Yes — GNOME (built-in magnifier) and KDE Plasma (KWin Zoom). Global input capture works best on X11.</p>
+      </details>
     </div>
   </section>
 
