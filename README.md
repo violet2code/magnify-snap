@@ -78,6 +78,18 @@ to tune it, the settings are one tray-click away:
 | Open settings | Click the tray icon → "Settings…" |
 | Quit | Right-click the tray icon → "Quit" |
 
+## Install via a package manager
+
+**Scoop** (Windows):
+
+```powershell
+scoop bucket add violet2code https://github.com/violet2code/scoop-bucket
+scoop install magnifysnap
+```
+
+**WinGet** — submission under review; once accepted:
+`winget install magnifysnap`
+
 ## Run from source
 
 ```bash
