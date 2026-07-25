@@ -340,8 +340,12 @@
     })
     .catch(() => {});
 </script>
-<!-- Privacy-friendly analytics: no cookies, no personal data (GoatCounter) -->
-<script data-goatcounter="https://magnifysnap.goatcounter.com/count"
-        async src="//gc.zgo.at/count.js"></script>
+<!-- Invisible visit counter: aggregate integer only, no cookies, no account, nothing shown -->
+<script>
+  if (location.hostname.endsWith("github.io")) {
+    fetch("https://abacus.jasoncameron.dev/hit/violet2code-magnifysnap/home")
+      .catch(() => {});
+  }
+</script>
 </body>
 </html>
