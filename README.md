@@ -20,9 +20,9 @@ already have on the mouse.
 > a magnifier that gets out of your way.
 
 <p align="center">
-  <a href="https://github.com/violet2code/magnify-snap/releases/download/v1.3.1/MagnifySnap-1.3.1-windows-x64.exe"><img src="https://img.shields.io/badge/⬇%20Download%20for%20Windows-x64%20.exe-4f8dfd?style=for-the-badge" alt="Download for Windows"></a>
+  <a href="https://github.com/violet2code/magnify-snap/releases/download/v1.3.2/MagnifySnap-1.3.2-windows-x64.exe"><img src="https://img.shields.io/badge/⬇%20Download%20for%20Windows-x64%20.exe-4f8dfd?style=for-the-badge" alt="Download for Windows"></a>
   &nbsp;
-  <a href="https://github.com/violet2code/magnify-snap/releases/download/v1.3.1/MagnifySnap-1.3.1-linux-x64.tar.gz"><img src="https://img.shields.io/badge/⬇%20Download%20for%20Linux-x64%20.tar.gz-3ddc97?style=for-the-badge" alt="Download for Linux"></a>
+  <a href="https://github.com/violet2code/magnify-snap/releases/download/v1.3.2/MagnifySnap-1.3.2-linux-x64.tar.gz"><img src="https://img.shields.io/badge/⬇%20Download%20for%20Linux-x64%20.tar.gz-3ddc97?style=for-the-badge" alt="Download for Linux"></a>
 </p>
 
 <p align="center">
@@ -80,11 +80,9 @@ to tune it, the settings are one tray-click away:
 
 ## Install via a package manager
 
-**WinGet** (Windows 10/11 — built in):
-
-```powershell
-winget install magnifysnap
-```
+**WinGet** — 1.3.2 is awaiting review; until it is merged the WinGet
+index still serves 1.3.0, which Windows Defender flags. Please use the
+direct download above or Scoop for now.
 
 **Scoop** (Windows):
 

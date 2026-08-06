@@ -20,19 +20,29 @@ jobs:
           python tools/make_icon.py
           python tools/make_version_file.py
           python -m PyInstaller --noconfirm --clean --onefile --windowed --name MagnifySnap --icon assets/icon.ico --version-file assets/version_info.txt --collect-all customtkinter main.py
-      - name: Antivirus gate (Windows Defender)
+      - name: Antivirus check (best effort — see note)
         shell: pwsh
         run: |
-          # ловим ложные срабатывания ДО того, как файл уйдёт пользователям
+          # ВАЖНО: на GitHub-раннерах рабочая папка исключена из проверки
+          # Defender, поэтому скан обычно рапортует "was skipped". Такой
+          # результат НЕЛЬЗЯ считать чистым — настоящий барьер это
+          # tools/av_check.py на машине с боевым Defender перед релизом.
           $mp = "$env:ProgramFiles\Windows Defender\MpCmdRun.exe"
-          if (-not (Test-Path $mp)) { Write-Host "Defender not available on runner — skipping"; exit 0 }
-          & $mp -SignatureUpdate | Out-Null
-          $out = & $mp -Scan -ScanType 3 -File (Resolve-Path dist/MagnifySnap.exe)
-          $out | Write-Host
-          if ($LASTEXITCODE -ne 0 -or -not (Test-Path dist/MagnifySnap.exe)) {
-            throw "Windows Defender flagged the build — refusing to publish"
+          $exe = (Resolve-Path dist/MagnifySnap.exe).Path
+          if (-not (Test-Path $mp)) {
+            Write-Host "::warning::Defender unavailable on runner — build NOT scanned"
+            exit 0
           }
-          Write-Host "Defender scan clean"
+          $out = (& $mp -Scan -ScanType 3 -File $exe) -join "`n"
+          Write-Host $out
+          if ($out -match 'found no threats') {
+            Write-Host "Defender scan clean"
+          } elseif ($out -match 'was skipped' -or -not (Test-Path $exe)) {
+            if (-not (Test-Path $exe)) { throw "Binary disappeared during scan — Defender removed it" }
+            Write-Host "::warning::Runner excludes the workspace — binary NOT scanned here. Run tools/av_check.py before publishing."
+          } else {
+            throw "Windows Defender reported a threat — refusing to publish"
+          }
       - name: Package
         run: Move-Item dist/MagnifySnap.exe dist/MagnifySnap-windows-x64.exe
       - uses: actions/upload-artifact@v4

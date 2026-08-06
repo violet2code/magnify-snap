@@ -52,7 +52,8 @@ class SettingsWindow(ctk.CTkToplevel):
 
         self.title(f"{APP_NAME} — Settings")
         self.geometry(self._fit_geometry())
-        self.resizable(False, False)
+        self.resizable(False, True)   # по высоте — чтобы можно было растянуть
+        self.minsize(880, 320)
         self.protocol("WM_DELETE_WINDOW", self._on_close)
         self.after(180, self._set_window_icon)
 
@@ -60,8 +61,10 @@ class SettingsWindow(ctk.CTkToplevel):
         # забирает всю высоту и выдавливает его за пределы окна
         self._build_footer()
 
-        body = ctk.CTkFrame(self, fg_color="transparent")
-        body.pack(fill="both", expand=True, padx=16, pady=(12, 4))
+        # прокручиваемый: на низких экранах (напр. 1080p при масштабе 200%)
+        # окну не хватает высоты, и без прокрутки часть настроек недостижима
+        body = ctk.CTkScrollableFrame(self, fg_color="transparent")
+        body.pack(fill="both", expand=True, padx=10, pady=(12, 4))
 
         self._build_header(body)
 

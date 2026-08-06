@@ -227,12 +227,20 @@ class FastMagnifierApp:
 
         def work():
             info = self.update_info
+            path = None
             try:
                 managed = updater.managed_install()
-                if managed == "winget":
+                if managed:
                     self.tray.notify(
-                        "This copy is managed by WinGet — run: "
-                        "winget upgrade magnifysnap"
+                        f"This copy is managed by {managed} — run: "
+                        f"{managed} upgrade magnifysnap"
+                    )
+                    return
+                if not info.get("sha256"):
+                    # без отпечатка нечем подтвердить целостность скачанного
+                    self.tray.notify(
+                        "Update skipped: the release has no checksum to "
+                        "verify. Download it from violet2code.github.io"
                     )
                     return
                 self.tray.notify(f"Downloading version {info['version']}…")
@@ -242,6 +250,11 @@ class FastMagnifierApp:
                 updater.apply_update(path)
                 self.request_quit()
             except Exception as exc:
+                if path:  # не оставляем 20 МБ мусора после неудачи
+                    try:
+                        os.remove(path)
+                    except OSError:
+                        pass
                 self.tray.notify(f"Update failed: {exc}")
                 self._updating = False
 

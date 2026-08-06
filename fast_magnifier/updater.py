@@ -39,10 +39,21 @@ def is_frozen() -> bool:
 
 
 def managed_install() -> str | None:
-    """'winget', если exe живёт в папке WinGet — тогда обновляет он, не мы."""
+    """Имя пакетного менеджера, если приложение установлено им.
+
+    Такие копии обновляет менеджер: подменять файл самим — значит рассинхронить
+    его учёт версий (и обновление откатится при следующем `upgrade`).
+    """
     exe = (sys.executable or "").lower()
-    if sys.platform == "win32" and f"{os.sep}winget{os.sep}".lower() in exe:
+    sep = os.sep.lower()
+    if sys.platform != "win32":
+        return None
+    if f"{sep}winget{sep}" in exe or f"{sep}winget packages{sep}" in exe:
         return "winget"
+    if f"{sep}scoop{sep}apps{sep}" in exe:
+        return "scoop"
+    if f"{sep}chocolatey{sep}" in exe:
+        return "chocolatey"
     return None
 
 
@@ -65,6 +76,28 @@ def check_latest(timeout: float = 15.0) -> dict | None:
                 "newer": parse_version(version) > parse_version(VERSION),
             }
     return None
+
+
+def _replace_atomically(source: str, target: str) -> None:
+    """Ставит source на место target без окна «файл уже испорчен».
+
+    Копия сначала пишется рядом с целью (тот же том — os.replace атомарен
+    и не спотыкается о EXDEV, когда временная папка на другом разделе),
+    и только потом одним движением занимает место цели.
+    """
+    staging = target + ".new"
+    try:
+        shutil.copy2(source, staging)
+        if sys.platform != "win32":
+            os.chmod(staging, 0o755)
+        os.replace(staging, target)
+    except BaseException:
+        try:
+            if os.path.exists(staging):
+                os.remove(staging)
+        except OSError:
+            pass
+        raise
 
 
 def download_verified(url: str, sha256: str | None, timeout: float = 60.0) -> str:
@@ -128,9 +161,14 @@ def apply_update(downloaded: str) -> None:
     exe = sys.executable
 
     if sys.platform != "win32":
-        downloaded = _extract_linux_binary(downloaded)
-        os.replace(downloaded, exe)  # на Linux можно поверх работающего
-        os.chmod(exe, 0o755)
+        binary = _extract_linux_binary(downloaded)
+        try:
+            _replace_atomically(binary, exe)
+        finally:
+            try:
+                os.remove(binary)
+            except OSError:
+                pass
         subprocess.Popen([exe], close_fds=True,
                          cwd=os.path.dirname(exe) or None)
         return
@@ -183,13 +221,28 @@ def run_finish_update(argv) -> int:
     source = sys.executable
 
     _wait_for_exit(pids)
-    for attempt in range(60):  # файл освобождается не мгновенно
+    replaced = False
+    for _ in range(60):  # файл освобождается не мгновенно
         try:
-            shutil.copy2(source, target)
+            _replace_atomically(source, target)
+            replaced = True
             break
         except OSError:
             time.sleep(1.0)
-    else:
+
+    if not replaced:
+        # обновиться не вышло (нет прав, диск полон) — но старое приложение
+        # цело: возвращаем пользователю рабочую программу, а не пустоту
+        try:
+            subprocess.Popen(
+                [target], close_fds=True,
+                creationflags=subprocess.CREATE_NO_WINDOW
+                | subprocess.CREATE_NEW_PROCESS_GROUP,
+                cwd=os.path.dirname(target) or None,
+            )
+        except OSError:
+            pass
+        _notify_update_failed(target)
         return 1
 
     subprocess.Popen(
@@ -200,6 +253,24 @@ def run_finish_update(argv) -> int:
         cwd=os.path.dirname(target) or None,
     )
     return 0
+
+
+def _notify_update_failed(target: str) -> None:
+    """Сообщает о неудаче: молчаливое исчезновение хуже любой ошибки."""
+    if sys.platform != "win32":
+        return
+    try:
+        ctypes.windll.user32.MessageBoxW(
+            None,
+            "Magnify.Snap could not replace its own file "
+            f"({target}).\n\nThe previous version keeps working. "
+            "If the app is installed in a system folder, download the new "
+            "version from violet2code.github.io instead.",
+            "Magnify.Snap — update failed",
+            0x40,  # MB_ICONINFORMATION
+        )
+    except Exception:
+        pass
 
 
 def cleanup_temp_copy(path: str) -> None:
