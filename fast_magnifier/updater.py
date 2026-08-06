@@ -8,6 +8,7 @@ SHA256-отпечатком из API. Самозамена на Windows — че
 Переменные окружения (только для тестов):
   MAGNIFYSNAP_UPDATE_API — подменить URL API релизов.
 """
+import ctypes
 import hashlib
 import json
 import os
@@ -104,34 +105,20 @@ def _extract_linux_binary(tar_path: str) -> str:
     return out
 
 
-_PS_TEMPLATE = r"""
-$exe  = '{exe}'
-$new  = '{new}'
-$pids = @({pids})
-foreach ($p in $pids) {{
-    try {{ Wait-Process -Id $p -Timeout 90 -ErrorAction SilentlyContinue }} catch {{}}
-}}
-$ok = $false
-for ($i = 0; $i -lt 60; $i++) {{
-    try {{ Move-Item -LiteralPath $new -Destination $exe -Force -ErrorAction Stop; $ok = $true; break }}
-    catch {{ Start-Sleep -Seconds 1 }}
-}}
-if ($ok) {{
-    Start-Process -FilePath $exe -WorkingDirectory (Split-Path $exe)
-}}
-Remove-Item -LiteralPath $MyInvocation.MyCommand.Path -Force -ErrorAction SilentlyContinue
-"""
+FINISH_FLAG = "--finish-update"   # <target-exe> <pid> [pid…]
+CLEANUP_FLAG = "--cleanup-update"  # <temp-exe>
 
 
 def apply_update(downloaded: str) -> None:
-    """Готовит замену исполняемого файла и запуск новой версии.
+    """Запускает замену исполняемого файла новой версией.
 
-    Windows: переписать или переименовать exe работающего onefile-приложения
-    нельзя (его держит процесс-загрузчик PyInstaller), поэтому запускается
-    скрытый PowerShell-помощник: он ждёт полного завершения обоих процессов
-    (python + загрузчик), подменяет уже незапертый файл, стартует новую
-    версию и удаляет сам себя. Вызывающий после этого штатно завершает
-    приложение. До завершения старый exe остаётся нетронутым.
+    Windows: перезаписать exe работающего onefile-приложения нельзя (файл
+    держит процесс-загрузчик PyInstaller). Поэтому эстафету принимает сама
+    СКАЧАННАЯ КОПИЯ: она запускается с флагом --finish-update, дожидается
+    завершения старых процессов, копирует себя на их место и стартует
+    обновлённое приложение. Никаких сторонних интерпретаторов и временных
+    скриптов — только наш собственный подписанный тем же способом файл
+    (скрытый PowerShell в этой роли антивирусы принимают за дроппер).
 
     Linux: работающий бинарник заменяется напрямую (inode остаётся у
     процесса), новая копия запускается сразу.
@@ -148,24 +135,86 @@ def apply_update(downloaded: str) -> None:
                          cwd=os.path.dirname(exe) or None)
         return
 
-    pids = {os.getpid()}
+    pids = [os.getpid()]
     try:
-        pids.add(os.getppid())  # загрузчик PyInstaller
+        ppid = os.getppid()  # загрузчик PyInstaller держит файл до конца
+        if ppid and ppid != pids[0]:
+            pids.append(ppid)
     except OSError:
         pass
-    script = _PS_TEMPLATE.format(
-        exe=exe.replace("'", "''"),
-        new=downloaded.replace("'", "''"),
-        pids=", ".join(str(p) for p in sorted(pids)),
-    )
-    fd, ps1 = tempfile.mkstemp(prefix="magnifysnap-swap-", suffix=".ps1")
-    with os.fdopen(fd, "w", encoding="utf-8-sig") as f:
-        f.write(script)
-    # ВАЖНО: DETACHED_PROCESS сюда добавлять нельзя — он конфликтует с
-    # CREATE_NO_WINDOW, и консольный powershell мгновенно умирает
-    flags = subprocess.CREATE_NO_WINDOW | subprocess.CREATE_NEW_PROCESS_GROUP
     subprocess.Popen(
-        ["powershell", "-NoProfile", "-ExecutionPolicy", "Bypass",
-         "-WindowStyle", "Hidden", "-File", ps1],
-        close_fds=True, creationflags=flags,
+        [downloaded, FINISH_FLAG, exe, *(str(p) for p in pids)],
+        close_fds=True,
+        creationflags=subprocess.CREATE_NO_WINDOW
+        | subprocess.CREATE_NEW_PROCESS_GROUP,
+        cwd=os.path.dirname(downloaded) or None,
     )
+
+
+def _wait_for_exit(pids, timeout: float = 90.0) -> None:
+    """Ждёт завершения процессов по pid (без сторонних библиотек)."""
+    import time
+    if sys.platform != "win32":
+        return
+    SYNCHRONIZE = 0x00100000
+    k32 = ctypes.windll.kernel32
+    deadline = time.monotonic() + timeout
+    for pid in pids:
+        handle = k32.OpenProcess(SYNCHRONIZE, False, int(pid))
+        if not handle:
+            continue  # процесса уже нет
+        try:
+            left = max(0, deadline - time.monotonic())
+            k32.WaitForSingleObject(handle, int(left * 1000))
+        finally:
+            k32.CloseHandle(handle)
+
+
+def run_finish_update(argv) -> int:
+    """Режим --finish-update: мы — скачанная копия, ставим себя на место.
+
+    argv: [target_exe, pid, …]. Возвращает код выхода процесса.
+    """
+    import time
+    if len(argv) < 1:
+        return 2
+    target = argv[0]
+    pids = [p for p in argv[1:] if p.isdigit()]
+    source = sys.executable
+
+    _wait_for_exit(pids)
+    for attempt in range(60):  # файл освобождается не мгновенно
+        try:
+            shutil.copy2(source, target)
+            break
+        except OSError:
+            time.sleep(1.0)
+    else:
+        return 1
+
+    subprocess.Popen(
+        [target, CLEANUP_FLAG, source],
+        close_fds=True,
+        creationflags=subprocess.CREATE_NO_WINDOW
+        | subprocess.CREATE_NEW_PROCESS_GROUP,
+        cwd=os.path.dirname(target) or None,
+    )
+    return 0
+
+
+def cleanup_temp_copy(path: str) -> None:
+    """Удаляет временную копию, из которой мы только что обновились."""
+    import threading
+    import time
+
+    def work():
+        for _ in range(60):
+            try:
+                if not os.path.exists(path):
+                    return
+                os.remove(path)
+                return
+            except OSError:
+                time.sleep(1.0)
+
+    threading.Thread(target=work, daemon=True).start()

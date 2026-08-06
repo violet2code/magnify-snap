@@ -279,6 +279,15 @@ class FastMagnifierApp:
 
 
 def main() -> int:
+    from fast_magnifier import updater
+
+    # служебные режимы самообновления — до всякой инициализации UI
+    if len(sys.argv) > 1 and sys.argv[1] == updater.FINISH_FLAG:
+        return updater.run_finish_update(sys.argv[2:])
+    cleanup_path = None
+    if len(sys.argv) > 2 and sys.argv[1] == updater.CLEANUP_FLAG:
+        cleanup_path = sys.argv[2]
+
     set_dpi_aware()
     lock = acquire_single_instance()
     if lock is None:
@@ -287,6 +296,8 @@ def main() -> int:
         except OSError:
             pass
         return 1
+    if cleanup_path:
+        updater.cleanup_temp_copy(cleanup_path)
     app = FastMagnifierApp()
     app.lock_socket = lock
     app.run()
