@@ -80,15 +80,18 @@ to tune it, the settings are one tray-click away:
 
 ## Install via a package manager
 
+**WinGet** (Windows 10/11 — built in):
+
+```powershell
+winget install magnifysnap
+```
+
 **Scoop** (Windows):
 
 ```powershell
 scoop bucket add violet2code https://github.com/violet2code/scoop-bucket
 scoop install magnifysnap
 ```
-
-**WinGet** — submission under review; once accepted:
-`winget install magnifysnap`
 
 ## Run from source
 

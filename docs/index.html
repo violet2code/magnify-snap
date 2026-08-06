@@ -107,6 +107,25 @@
   .hero .note { margin-top: 14px; color: var(--dim); font-size: 13px; }
   .hero .note a { color: var(--dim); }
 
+  .winget {
+    margin: 22px auto 0; display: inline-flex; align-items: center; gap: 12px;
+    flex-wrap: wrap; justify-content: center;
+    background: var(--card); border: 1px solid var(--card-border);
+    border-radius: 12px; padding: 10px 14px;
+  }
+  .winget-label { color: var(--dim); font-size: 13px; }
+  .winget code {
+    font-family: "Cascadia Code", Consolas, monospace; font-size: 15px;
+    color: var(--text);
+  }
+  .winget button {
+    border: 1px solid var(--card-border); background: #202736; color: var(--dim);
+    border-radius: 8px; padding: 5px 12px; font-size: 12px; cursor: pointer;
+    font-family: inherit; transition: color .15s, border-color .15s;
+  }
+  .winget button:hover { color: var(--text); border-color: var(--blue); }
+  .winget button.done { color: var(--green); border-color: var(--green); }
+
   .demo {
     margin: 44px auto 0; max-width: 720px; border-radius: 18px;
     background: linear-gradient(160deg, #161c28, #101521);
@@ -209,6 +228,12 @@
       </a>
     </div>
     <p class="note">Open source · no ads · <a href="https://github.com/violet2code/magnify-snap" target="_blank">view on GitHub</a></p>
+
+    <div class="winget">
+      <span class="winget-label">or install from the terminal</span>
+      <code id="winget-cmd">winget install magnifysnap</code>
+      <button type="button" id="winget-copy" title="Copy to clipboard">Copy</button>
+    </div>
 
     <div class="demo">
       <span class="keycap">Middle click</span><span class="arrow">→</span><span class="zoomtxt">200%</span><span class="arrow">→</span><span class="keycap">Middle click</span><span class="arrow">→</span><span class="zoomtxt" style="color:var(--green)">100%</span>
@@ -339,6 +364,52 @@
       }
     })
     .catch(() => {});
+</script>
+<script>
+  // Кнопка «Copy» у команды установки
+  document.getElementById("winget-copy").addEventListener("click", function () {
+    const btn = this;
+    const text = document.getElementById("winget-cmd").textContent;
+
+    const flash = (label, ok) => {
+      btn.textContent = label;
+      if (ok) btn.classList.add("done");
+      setTimeout(() => {
+        btn.textContent = "Copy";
+        btn.classList.remove("done");
+      }, 1600);
+    };
+
+    // запасной путь: буфер обмена недоступен (старый браузер / http)
+    const legacyCopy = () => {
+      const ta = document.createElement("textarea");
+      ta.value = text;
+      ta.setAttribute("readonly", "");
+      ta.style.cssText = "position:fixed;top:0;left:0;opacity:0";
+      document.body.appendChild(ta);
+      ta.select();
+      let ok = false;
+      try { ok = document.execCommand("copy"); } catch (e) { ok = false; }
+      document.body.removeChild(ta);
+      if (!ok) {
+        // выделяем саму команду, чтобы совет «Ctrl+C» был выполним
+        const range = document.createRange();
+        range.selectNodeContents(document.getElementById("winget-cmd"));
+        const sel = window.getSelection();
+        sel.removeAllRanges();
+        sel.addRange(range);
+      }
+      flash(ok ? "Copied" : "Press Ctrl+C", ok);
+    };
+
+    if (navigator.clipboard && window.isSecureContext) {
+      navigator.clipboard.writeText(text)
+        .then(() => flash("Copied", true))
+        .catch(legacyCopy);
+    } else {
+      legacyCopy();
+    }
+  });
 </script>
 <!-- Invisible visit counter: aggregate integer only, no cookies, no account, nothing shown -->
 <script>
