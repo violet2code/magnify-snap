@@ -23,6 +23,9 @@ AMBER = "#e8a33d"
 FONT = "Segoe UI" if sys.platform == "win32" else "Ubuntu"
 THEME_VALUES = {"System": "system", "Light": "light", "Dark": "dark"}
 
+WEBSITE_URL = "https://violet2code.github.io/"
+WEBSITE_LABEL = "violet2code.github.io"
+
 BIND_HINT = "One press zooms in, another zooms back out"
 PEEK_HINT = "Hold the button to zoom in closer, release to settle back"
 PEEK_WARN = "Peek level is not above the zoom level — holding won't zoom further"
@@ -53,6 +56,10 @@ class SettingsWindow(ctk.CTkToplevel):
         self.protocol("WM_DELETE_WINDOW", self._on_close)
         self.after(180, self._set_window_icon)
 
+        # футер пакуется ПЕРВЫМ и снизу: иначе растягивающийся body
+        # забирает всю высоту и выдавливает его за пределы окна
+        self._build_footer()
+
         body = ctk.CTkFrame(self, fg_color="transparent")
         body.pack(fill="both", expand=True, padx=16, pady=(12, 4))
 
@@ -69,7 +76,6 @@ class SettingsWindow(ctk.CTkToplevel):
         self._build_binding_card(left)
         self._build_pan_card(right)
         self._build_misc_card(right)
-        self._build_footer()
         self._refresh_peek_state()
 
         self.lift()
@@ -83,7 +89,7 @@ class SettingsWindow(ctk.CTkToplevel):
             scale = self._get_window_scaling()
         except Exception:
             scale = 1.0
-        width, height = 880, 515
+        width, height = 880, 545
         try:
             sw = int(self.winfo_screenwidth() / scale)
             sh = int(self.winfo_screenheight() / scale)
@@ -305,11 +311,25 @@ class SettingsWindow(ctk.CTkToplevel):
         self._sync_update_button()
 
     def _build_footer(self) -> None:
+        bar = ctk.CTkFrame(self, fg_color="transparent")
+        bar.pack(side="bottom", pady=(0, 8))
         ctk.CTkLabel(
-            self,
-            text=f"{APP_NAME} v{VERSION} · lives in the system tray",
+            bar, text=f"{APP_NAME} v{VERSION} · lives in the system tray · ",
             font=ctk.CTkFont(FONT, 11), text_color=TEXT_DIM,
-        ).pack(pady=(0, 8))
+        ).pack(side="left")
+        site = ctk.CTkLabel(
+            bar, text=WEBSITE_LABEL, cursor="hand2",
+            font=ctk.CTkFont(FONT, 11, underline=True), text_color=BLUE,
+        )
+        site.pack(side="left")
+        site.bind("<Button-1>", lambda e: self._open_website())
+
+    def _open_website(self) -> None:
+        import webbrowser
+        try:
+            webbrowser.open(WEBSITE_URL)
+        except Exception:
+            pass
 
     # -- handlers -----------------------------------------------------------
 

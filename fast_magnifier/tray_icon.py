@@ -33,8 +33,17 @@ class Tray:
                       pystray.MenuItem(self._update_label,
                                        lambda: self._on_update())]
         items += [pystray.Menu.SEPARATOR,
+                  pystray.MenuItem("Website", lambda: self._open_website()),
                   pystray.MenuItem("Quit", lambda: self._on_exit())]
         return pystray.Menu(*items)
+
+    @staticmethod
+    def _open_website() -> None:
+        import webbrowser
+        try:
+            webbrowser.open("https://violet2code.github.io/")
+        except Exception:
+            pass
 
     def set_update(self, label: str | None, action=None) -> None:
         """Показать/убрать пункт «Update to vX…» в меню трея."""
