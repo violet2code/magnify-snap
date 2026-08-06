@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Privacy Policy — Magnify.Snap</title>
+<meta name="description" content="Magnify.Snap privacy policy: no telemetry, no analytics, no personal data. The only network request is an optional update check against GitHub.">
+<link rel="canonical" href="https://violet2code.github.io/privacy.html">
+<link rel="icon" type="image/png" href="icon.png">
+<style>
+  :root {
+    --blue: #4f8dfd; --green: #3ddc97; --bg: #0e1117; --card: #171c26;
+    --card-border: #232a38; --text: #e8ecf4; --dim: #96a0b3;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: "Segoe UI", Inter, system-ui, Arial, sans-serif;
+    background: var(--bg); color: var(--text); line-height: 1.7;
+  }
+  .wrap { max-width: 760px; margin: 0 auto; padding: 0 24px 60px; }
+  header { padding: 26px 0; }
+  .brand { display: flex; align-items: center; gap: 12px; font-size: 20px; font-weight: 700; text-decoration: none; }
+  .brand img { height: 34px; }
+  .brand .m { color: var(--blue); } .brand .s { color: var(--green); }
+  h1 { font-size: 32px; margin: 24px 0 8px; }
+  h2 { font-size: 20px; margin: 28px 0 8px; color: var(--text); }
+  p, li { color: var(--dim); }
+  ul { margin: 8px 0 8px 22px; }
+  .updated { color: var(--dim); font-size: 14px; }
+  .box {
+    background: var(--card); border: 1px solid var(--card-border);
+    border-radius: 14px; padding: 20px 24px; margin: 22px 0;
+  }
+  .box strong { color: var(--text); }
+  a { color: var(--blue); }
+  footer { padding: 30px 0; color: var(--dim); font-size: 14px; }
+</style>
+</head>
+<body>
+<header class="wrap">
+  <a class="brand" href="/">
+    <img src="logo-mark.svg" alt="Magnify.Snap logo">
+    <span><span class="m">Magnify</span><span class="s">.Snap</span></span>
+  </a>
+</header>
+
+<main class="wrap">
+  <h1>Privacy Policy</h1>
+  <p class="updated">Last updated: 6 August 2026</p>
+
+  <div class="box">
+    <p><strong>Short version:</strong> Magnify.Snap collects nothing about you.
+    There is no telemetry, no analytics, no accounts and no advertising. The
+    only network request the application can make is an optional check for a
+    new version, which you can switch off.</p>
+  </div>
+
+  <h2>Data the application collects</h2>
+  <p>None. Magnify.Snap does not gather, store or transmit personal data,
+  usage statistics, screen contents, keystrokes or any identifiers.</p>
+
+  <h2>Data stored on your computer</h2>
+  <p>Your settings — zoom level, hold-to-peek level, activation binding,
+  panning speed, appearance and whether the update check is enabled — are
+  stored locally in a plain JSON file:</p>
+  <ul>
+    <li>Windows: <code>%APPDATA%\MagnifySnap\config.json</code></li>
+    <li>Linux: <code>~/.config/magnifysnap/config.json</code></li>
+  </ul>
+  <p>This file never leaves your computer. Deleting it resets the app to
+  its defaults.</p>
+
+  <h2>Network communication</h2>
+  <p>When the “Check for updates daily” option is enabled (the default), the
+  application makes one anonymous HTTPS request per day to the public GitHub
+  API endpoint of its own repository, to learn the latest released version
+  number:</p>
+  <ul>
+    <li><code>https://api.github.com/repos/violet2code/magnify-snap/releases/latest</code></li>
+  </ul>
+  <p>The request carries no account, no identifier and no information about
+  you or your computer beyond what any HTTPS request unavoidably reveals to
+  the server (your IP address and a generic user agent). GitHub processes
+  such requests under
+  <a href="https://docs.github.com/site-policy/privacy-policies/github-privacy-statement" target="_blank" rel="noopener">its own privacy statement</a>.</p>
+  <p>If you click the update button, the application additionally downloads
+  the release file from GitHub and verifies its SHA-256 checksum. No other
+  connection is ever made. Switching off “Check for updates daily” in the
+  settings stops all network activity.</p>
+
+  <h2>Website</h2>
+  <p>This website is hosted on GitHub Pages. It sets no cookies and runs no
+  advertising or tracking scripts. It records a single anonymous counter of
+  page visits (a plain number, with no personal data, no cookies and no
+  profiles) so the author can see whether anyone is using the project.</p>
+
+  <h2>Children</h2>
+  <p>The application is a general-purpose accessibility utility and is not
+  directed at children. Since it collects no data, none is collected from
+  anyone regardless of age.</p>
+
+  <h2>Changes</h2>
+  <p>If this policy ever changes, the updated version will be published on
+  this page with a new date. The application is open source, so any change in
+  its network behaviour is visible in the
+  <a href="https://github.com/violet2code/magnify-snap" target="_blank" rel="noopener">public source code</a>
+  and its commit history.</p>
+
+  <h2>Contact</h2>
+  <p>Questions or concerns:
+  <a href="https://github.com/violet2code/magnify-snap/issues" target="_blank" rel="noopener">open an issue on GitHub</a>.</p>
+</main>
+
+<footer class="wrap">
+  <a href="/">← Back to Magnify.Snap</a>
+</footer>
+</body>
+</html>

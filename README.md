@@ -130,6 +130,27 @@ built-in `Super+Alt+8` magnifier shortcut is available.
 Linux system packages: `python3-tk`; the tray icon on GNOME may require the
 AppIndicator extension (`gir1.2-ayatanaappindicator3`).
 
+## Code signing policy
+
+**Committers and reviewers.** Magnify.Snap is maintained by its author,
+[violet2code](https://github.com/violet2code), who is the sole committer and
+reviewer. All changes land in this public repository and are visible in its
+commit history.
+
+**Approvers.** Releases are approved and published by the same maintainer,
+who holds the project leadership role. The account is protected with
+multi-factor authentication.
+
+**Builds.** Release binaries are produced from this source by the
+[GitHub Actions workflow](.github/workflows/build.yml), and every published
+file lists its SHA-256 checksum on the
+[releases page](https://github.com/violet2code/magnify-snap/releases).
+
+**Privacy.** See the [privacy policy](https://violet2code.github.io/privacy.html).
+The application collects no personal data and makes no network request other
+than an optional daily version check against the GitHub API, which can be
+switched off in its settings.
+
 ## Project layout
 
 ```

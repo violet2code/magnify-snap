@@ -196,6 +196,16 @@
   .faq-list summary { cursor: pointer; font-weight: 600; font-size: 16px; }
   .faq-list details p { color: var(--dim); font-size: 14.5px; padding-top: 10px; }
 
+  section.policy { padding: 48px 0 8px; }
+  .policy-box {
+    max-width: 760px; margin: 0 auto; background: var(--card);
+    border: 1px solid var(--card-border); border-radius: 14px; padding: 24px 28px;
+  }
+  .policy-box p { color: var(--dim); font-size: 14.5px; margin-bottom: 12px; }
+  .policy-box p:last-child { margin-bottom: 0; }
+  .policy-box b { color: var(--text); }
+  .policy-box a { color: var(--blue); }
+
   footer { padding: 48px 0 40px; text-align: center; color: var(--dim); font-size: 14px; }
   footer a { color: var(--blue); text-decoration: none; }
 </style>
@@ -331,6 +341,32 @@
     </div>
   </section>
 
+  <section class="policy wrap" id="code-signing-policy">
+    <h2>Code signing policy</h2>
+    <div class="policy-box">
+      <p><b>Committers and reviewers.</b> Magnify.Snap is maintained by its
+      author, <a href="https://github.com/violet2code" target="_blank" rel="noopener">violet2code</a>,
+      who is the sole committer and reviewer. All changes land in the public
+      <a href="https://github.com/violet2code/magnify-snap" target="_blank" rel="noopener">GitHub repository</a>
+      and are visible in its commit history.</p>
+
+      <p><b>Approvers.</b> Releases are approved and published by the same
+      maintainer, who holds the project leadership role. The account is
+      protected with multi-factor authentication.</p>
+
+      <p><b>Builds.</b> Release binaries are produced from the public source
+      by the project's
+      <a href="https://github.com/violet2code/magnify-snap/blob/master/.github/workflows/build.yml" target="_blank" rel="noopener">GitHub Actions workflow</a>,
+      and every published file lists its SHA-256 checksum on the
+      <a href="https://github.com/violet2code/magnify-snap/releases" target="_blank" rel="noopener">releases page</a>.</p>
+
+      <p><b>Privacy.</b> See the <a href="privacy.html">privacy policy</a>.
+      In short: the application collects no personal data and makes no network
+      request other than an optional daily version check against the GitHub
+      API, which can be switched off in its settings.</p>
+    </div>
+  </section>
+
   <section class="how wrap">
     <h2>Up and running in a minute</h2>
     <div class="steps">
@@ -344,7 +380,9 @@
 <footer>
   <p>Magnify.Snap · free &amp; open source ·
   <a href="https://github.com/violet2code/magnify-snap" target="_blank">GitHub</a> ·
-  <a href="https://github.com/violet2code/magnify-snap/releases" target="_blank">all releases</a></p>
+  <a href="https://github.com/violet2code/magnify-snap/releases" target="_blank">all releases</a> ·
+  <a href="privacy.html">privacy</a> ·
+  <a href="#code-signing-policy">code signing policy</a></p>
 </footer>
 
 <script>
