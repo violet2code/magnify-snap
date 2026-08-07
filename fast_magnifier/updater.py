@@ -27,7 +27,27 @@ API_LATEST = os.environ.get(
     "https://api.github.com/repos/violet2code/magnify-snap/releases/latest",
 )
 
-_ASSET_SUFFIX = "-windows-x64.exe" if sys.platform == "win32" else "-linux-x64.tar.gz"
+_PORTABLE_SUFFIX = ("-windows-x64.exe" if sys.platform == "win32"
+                    else "-linux-x64.tar.gz")
+_SETUP_SUFFIX = "-windows-x64-setup.exe"
+
+
+def installed_by_setup() -> bool:
+    """True, если программу поставил наш установщик (рядом лежит деинсталлятор).
+
+    Такую копию нельзя обновлять подменой файла: в реестре останется старый
+    номер версии, и winget будет считать, что обновление не состоялось.
+    Вместо этого запускаем новый установщик — он обновит и файл, и запись.
+    """
+    if sys.platform != "win32" or not is_frozen():
+        return False
+    folder = os.path.dirname(sys.executable or "")
+    return bool(folder) and os.path.exists(
+        os.path.join(folder, "unins000.exe"))
+
+
+def _asset_suffix() -> str:
+    return _SETUP_SUFFIX if installed_by_setup() else _PORTABLE_SUFFIX
 
 
 def parse_version(text: str) -> tuple:
@@ -66,8 +86,9 @@ def check_latest(timeout: float = 15.0) -> dict | None:
     with urllib.request.urlopen(req, timeout=timeout) as resp:
         data = json.load(resp)
     version = str(data.get("tag_name", "")).lstrip("vV")
+    suffix = _asset_suffix()
     for asset in data.get("assets", []):
-        if asset.get("name", "").endswith(_ASSET_SUFFIX):
+        if asset.get("name", "").endswith(suffix):
             digest = asset.get("digest") or ""
             return {
                 "version": version,
@@ -159,6 +180,19 @@ def apply_update(downloaded: str) -> None:
     if not is_frozen():
         raise RuntimeError("running from source — self-update is disabled")
     exe = sys.executable
+
+    if installed_by_setup():
+        # обновляемся своим же установщиком: он закроет работающую копию,
+        # заменит файл, обновит запись в реестре и поднимет программу снова
+        subprocess.Popen(
+            [downloaded, "/VERYSILENT", "/SUPPRESSMSGBOXES", "/NORESTART",
+             "/AUTOLAUNCH=1"],
+            close_fds=True,
+            creationflags=subprocess.CREATE_NO_WINDOW
+            | subprocess.CREATE_NEW_PROCESS_GROUP,
+            cwd=os.path.dirname(downloaded) or None,
+        )
+        return
 
     if sys.platform != "win32":
         binary = _extract_linux_binary(downloaded)
