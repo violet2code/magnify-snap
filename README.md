@@ -80,9 +80,11 @@ to tune it, the settings are one tray-click away:
 
 ## Install via a package manager
 
-**WinGet** — 1.3.2 is awaiting review; until it is merged the WinGet
-index still serves 1.3.0, which Windows Defender flags. Please use the
-direct download above or Scoop for now.
+**WinGet** (Windows 10/11 — built in):
+
+```powershell
+winget install magnifysnap
+```
 
 **Scoop** (Windows):
 
