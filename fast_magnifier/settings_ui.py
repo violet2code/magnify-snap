@@ -92,7 +92,7 @@ class SettingsWindow(ctk.CTkToplevel):
             scale = self._get_window_scaling()
         except Exception:
             scale = 1.0
-        width, height = 880, 545
+        width, height = 880, 580
         try:
             sw = int(self.winfo_screenwidth() / scale)
             sh = int(self.winfo_screenheight() / scale)
@@ -288,6 +288,15 @@ class SettingsWindow(ctk.CTkToplevel):
         if autostart.is_enabled():
             self.autostart_switch.select()
 
+        self.shortcut_switch = ctk.CTkSwitch(
+            card, text="Show in Start menu",
+            font=ctk.CTkFont(FONT, 13), progress_color=BLUE,
+            command=self._on_shortcut_switch,
+        )
+        self.shortcut_switch.pack(anchor="w", padx=18, pady=(2, 2))
+        if self.cfg.start_menu_shortcut:
+            self.shortcut_switch.select()
+
         self.update_switch = ctk.CTkSwitch(
             card, text="Check for updates daily",
             font=ctk.CTkFont(FONT, 13), progress_color=BLUE,
@@ -392,6 +401,17 @@ class SettingsWindow(ctk.CTkToplevel):
 
     def _on_update_switch(self) -> None:
         self.cfg.auto_update_check = bool(self.update_switch.get())
+        self._schedule_save()
+
+    def _on_shortcut_switch(self) -> None:
+        from . import shortcut, updater
+        enabled = bool(self.shortcut_switch.get())
+        self.cfg.start_menu_shortcut = enabled
+        if updater.is_frozen():
+            shortcut.ensure(enabled)
+            if enabled and not shortcut.exists():
+                self.shortcut_switch.deselect()
+                self.cfg.start_menu_shortcut = False
         self._schedule_save()
 
     def _sync_update_button(self) -> None:

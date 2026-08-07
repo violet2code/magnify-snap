@@ -267,10 +267,22 @@ class FastMagnifierApp:
         (ui_call, request_quit) может ждать события от пользователя вечно."""
         self.root.after(200, self._heartbeat)
 
+    def _ensure_shortcut(self) -> None:
+        """Ярлык в «Пуске»: без него установленное через winget приложение
+        попросту негде найти — оно живёт в служебной папке без ярлыков."""
+        from fast_magnifier import shortcut, updater
+        if not updater.is_frozen():
+            return  # из исходников ярлык вёл бы на интерпретатор
+        try:
+            shortcut.ensure(self.cfg.start_menu_shortcut)
+        except Exception:
+            pass
+
     def run(self) -> None:
         atexit.register(self._cleanup)
         self.input.start()
         self.tray.run()
+        threading.Thread(target=self._ensure_shortcut, daemon=True).start()
         self.start_update_checks()
         self.root.after(200, self._heartbeat)
         try:

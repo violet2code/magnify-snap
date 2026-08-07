@@ -29,6 +29,7 @@ class Config:
     edge_size: int = 60             # ширина зоны у края экрана (px), в которой начинается прокрутка
     smooth_zoom: bool = True        # плавная анимация увеличения
     autostart: bool = False         # автозапуск при входе в систему
+    start_menu_shortcut: bool = True  # ярлык в меню «Пуск» / меню приложений
     auto_update_check: bool = True  # ежедневная проверка новых версий (GitHub)
     theme: str = "system"           # system | light | dark
     binding: dict = field(default_factory=lambda: dict(DEFAULT_BINDING))
