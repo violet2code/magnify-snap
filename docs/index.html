@@ -39,7 +39,7 @@
     {
       "@type": "Question",
       "name": "Is Magnify.Snap really free?",
-      "acceptedAnswer": { "@type": "Answer", "text": "Yes. Magnify.Snap is free and open source under the MIT license, with no ads, no telemetry and no paid tiers. It's a single portable file — no installer. The only network request it makes is an optional daily update check against GitHub, which you can turn off in settings." }
+      "acceptedAnswer": { "@type": "Answer", "text": "Yes. Magnify.Snap is free and open source under the MIT license, with no ads, no telemetry and no paid tiers. Take the installer, which adds it to the Start menu, or the single portable file, which installs nothing at all. The only network request it makes is an optional daily update check against GitHub, which you can turn off in settings." }
     },
     {
       "@type": "Question",
@@ -230,14 +230,16 @@
     <div class="dl-row">
       <a class="btn win" id="dl-win" href="https://github.com/violet2code/magnify-snap/releases/latest">
         <svg viewBox="0 0 24 24"><path d="M3 5.5 10.5 4.4V11.5H3V5.5ZM3 12.5H10.5V19.6L3 18.5V12.5ZM11.5 4.2 21 3V11.5H11.5V4.2ZM11.5 12.5H21V21L11.5 19.8V12.5Z"/></svg>
-        <span>Download for Windows<small id="win-size">64-bit · free</small></span>
+        <span>Download for Windows<small id="win-size">installer · free</small></span>
       </a>
       <a class="btn linux" id="dl-linux" href="https://github.com/violet2code/magnify-snap/releases/latest">
         <svg viewBox="0 0 24 24"><path d="M12 2c-2.2 0-3.6 1.6-3.6 3.9 0 1.3.2 2.3-.4 3.5-.9 1.6-2.5 3.2-3 5.3-.3 1.3-.1 2.6.6 3.6.3-.6.9-1 1.5-1.2-.2.7-.1 1.3.2 1.9.5.9 1.5 1.5 2.7 1.5.6 0 1.3.3 2 .3s1.4-.3 2-.3c1.2 0 2.2-.6 2.7-1.5.3-.6.4-1.2.2-1.9.6.2 1.2.6 1.5 1.2.7-1 .9-2.3.6-3.6-.5-2.1-2.1-3.7-3-5.3-.6-1.2-.4-2.2-.4-3.5C15.6 3.6 14.2 2 12 2Zm-1.5 5a.9.9 0 1 1 0 1.8.9.9 0 0 1 0-1.8Zm3 0a.9.9 0 1 1 0 1.8.9.9 0 0 1 0-1.8Zm-3.4 3.1c.6.5 1.5.8 2.4.8s1.8-.3 2.4-.8c.3.6.8 1.4 1.3 2.3-.9 1-2.2 1.6-3.7 1.6s-2.8-.6-3.7-1.6c.5-.9 1-1.7 1.3-2.3Z"/></svg>
         <span>Download for Linux<small id="linux-size">x86-64 · tar.gz</small></span>
       </a>
     </div>
-    <p class="note">Open source · no ads · <a href="https://github.com/violet2code/magnify-snap" target="_blank">view on GitHub</a></p>
+    <p class="note">Open source · no ads · prefer to install nothing? grab the
+    <a id="dl-portable" href="https://github.com/violet2code/magnify-snap/releases/latest">portable version</a> ·
+    <a href="https://github.com/violet2code/magnify-snap" target="_blank">view on GitHub</a></p>
 
     <div class="winget">
       <span class="winget-label">or install from the terminal</span>
@@ -294,7 +296,7 @@
       <div class="card">
         <div class="ic"><svg viewBox="0 0 24 24"><path d="M12 2 4 6v6c0 5 3.4 8.4 8 10 4.6-1.6 8-5 8-10V6l-8-4Z"/><path d="m9 12 2 2 4-4"/></svg></div>
         <h3>Tiny and honest</h3>
-        <p>A single portable file. No installer, no ads, no telemetry. Open source — inspect every line on GitHub.</p>
+        <p>Around 20 MB, one process, no ads and no telemetry. Install it properly or run the portable file — your choice. Open source: inspect every line on GitHub.</p>
       </div>
     </div>
   </section>
@@ -310,7 +312,7 @@
         from 125% to 800%, a hold-to-peek boost level, any mouse button / key /
         combination as the trigger, cursor-follow speed, light &amp; dark
         themes, autostart.</p>
-        <p>No installer. No ads. No telemetry. A single portable file.</p>
+        <p>No ads. No telemetry. No account. Install it or carry it on a stick — both work.</p>
       </div>
     </div>
   </section>
@@ -320,7 +322,7 @@
     <div class="faq-list">
       <details>
         <summary>Is Magnify.Snap really free?</summary>
-        <p>Yes. Free and open source (MIT license), no ads, no telemetry, no paid tiers. A single portable file — no installer. The only network request it makes is an optional daily update check against GitHub — one click updates in place, and the check can be turned off in settings.</p>
+        <p>Yes. Free and open source (MIT license), no ads, no telemetry, no paid tiers. Take the installer, which adds it to the Start menu, or the single portable file, which installs nothing at all. The only network request it makes is an optional daily update check against GitHub — one click updates in place, and the check can be turned off in settings.</p>
       </details>
       <details>
         <summary>How is it different from the built-in Windows Magnifier?</summary>
@@ -391,14 +393,28 @@
     .then(r => r.json())
     .then(rel => {
       const fmt = b => (b / 1048576).toFixed(1) + " MB";
-      for (const a of rel.assets || []) {
-        if (a.name.includes("windows")) {
-          document.getElementById("dl-win").href = a.browser_download_url;
-          document.getElementById("win-size").textContent = "64-bit · " + fmt(a.size);
-        } else if (a.name.includes("linux")) {
-          document.getElementById("dl-linux").href = a.browser_download_url;
-          document.getElementById("linux-size").textContent = "x86-64 · " + fmt(a.size);
-        }
+      const assets = rel.assets || [];
+      // выбираем файлы ЯВНО: у Windows их два (установщик и портативный),
+      // и «первый попавшийся с windows в имени» — лотерея
+      const find = suffix => assets.find(a => a.name.endsWith(suffix));
+      const setup = find("-windows-x64-setup.exe");
+      const portable = find("-windows-x64.exe");
+      const linux = find("-linux-x64.tar.gz");
+
+      if (setup) {
+        document.getElementById("dl-win").href = setup.browser_download_url;
+        document.getElementById("win-size").textContent =
+          "installer · " + fmt(setup.size);
+      }
+      if (portable) {
+        const link = document.getElementById("dl-portable");
+        link.href = portable.browser_download_url;
+        link.textContent = "portable version (" + fmt(portable.size) + ")";
+      }
+      if (linux) {
+        document.getElementById("dl-linux").href = linux.browser_download_url;
+        document.getElementById("linux-size").textContent =
+          "x86-64 · " + fmt(linux.size);
       }
     })
     .catch(() => {});
